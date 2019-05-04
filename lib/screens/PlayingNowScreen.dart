@@ -3,6 +3,9 @@ import 'dart:io';
 import 'dart:ui' as ui;
 //import 'package:musicplayer/pages/artistcard.dart';
 //import 'package:musicplayer/util/artistInfo.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:party_player/widgets/ChangeableButton.dart';
+import 'package:party_player/widgets/SwipeablePictureContainer.dart';
 import 'package:swipedetector/swipedetector.dart';
 //import 'package:flute_music_player/flute_music_player.dart';
 import 'package:flutter/material.dart';
@@ -21,9 +24,6 @@ class PlayingNowScreen extends StatefulWidget {
   }
 }
 
-double widthX;
-double sHeightX;
-
 class _StateNowPlaying extends State<PlayingNowScreen>
     with SingleTickerProviderStateMixin {
   Duration duration = Duration(seconds: 0);
@@ -34,9 +34,10 @@ class _StateNowPlaying extends State<PlayingNowScreen>
   Orientation orientation;
   AnimationController _animationController;
   Animation<Color> _animateColor;
-  bool isOpened = true;
+  //bool isOpened = true;
   Animation<double> _animateIcon;
   Timer timer;
+  
   bool _showArtistImage;
 
   get durationText => duration != null
@@ -72,7 +73,7 @@ class _StateNowPlaying extends State<PlayingNowScreen>
     _animateColor = ColorTween(
       begin: Colors.blueGrey[400].withOpacity(0.7),
       end: Colors.blueGrey[400].withOpacity(0.9),
-    ).animate(CurvedAnimation(
+    ).animate( CurvedAnimation(
       parent: _animationController,
       curve: Interval(
         0.00,
@@ -205,17 +206,14 @@ class _StateNowPlaying extends State<PlayingNowScreen>
   @override
   Widget build(BuildContext context) {
     orientation = MediaQuery.of(context).orientation;
-    return new Scaffold(
+    return Scaffold(
       key: scaffoldState,
       body: orientation == Orientation.portrait ? portrait() : landscape(),
-//      body: song != null ? orientation == Orientation.portrait ? portrait() : landscape() :
-//      Center(
-//        child: CircularProgressIndicator(),
-//      ),
       backgroundColor: Colors.transparent,
     );
   }
 
+  /// TODO criar bottom sheet com a lista de cancoes na queue de execucao
   void _showBottomSheet() {
     showModalBottomSheet(
         context: context,
@@ -323,146 +321,238 @@ class _StateNowPlaying extends State<PlayingNowScreen>
           );
         });
   }
+  
+  /// Metodos de criacao de widgets comuns para o layout
+  ///
+  Widget _backgroundPictureContainer(final double width, final double height) => Container(
+    height: height,  //MediaQuery.of(context).size.width,
+    width:  width, // 
+    color: Colors.white,
+    // TODO fazer a logica do non null
+    child: Image.asset("images/music.jpg", fit: BoxFit.fill,), );
+
+
+  Widget _blurEffect({final double width, final double, height,
+    final double sigmaX = 10, final double sigmaY = 15}) => BackdropFilter(
+    filter: ui.ImageFilter.blur(sigmaX: sigmaX, sigmaY: sigmaY),
+    child: Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(color: Colors.grey[900].withOpacity(0.5)),
+    ),
+  );
+  
+  Widget _spacingContainer({final double width, final double height}) => 
+      Container(
+        color: Colors.white, 
+        height: height, 
+        width: width,
+    );
+
+  Widget _seekBarRow({final double width, final double statusBarHeight}) => Row(
+    mainAxisSize: MainAxisSize.max,
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: <Widget>[
+      Text(positionText,style: TextStyle(
+          fontSize: 13.0,
+          color: Color(0xaa373737),
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.0
+      ),),
+      Container(
+        width: width * 0.85,
+        padding: EdgeInsets.only(
+          left: statusBarHeight * 0.5,
+        ),
+        child: Slider(
+          min: 0.0,
+          activeColor: Colors.blueGrey.shade400.withOpacity(0.5),
+          inactiveColor: Colors.blueGrey.shade300.withOpacity(0.3),
+          value: position?.inMilliseconds?.toDouble() ?? 0.0,
+          onChanged: (value ){},
+//             onChanged: (double value) =>
+//               player.seek((value / 1000).roundToDouble()),
+//               max: song.duration.toDouble() + 1000,
+        ),
+      ),
+    ],
+  );
+
+
+  Widget _labelsGroup() => Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: new Text(
+              'Song title'.toUpperCase(),
+              style: new TextStyle(
+                  color: Colors.black.withOpacity(0.85),
+                  fontSize: 17.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 3.0,
+                  height: 1.5,
+                  fontFamily: "Quicksand"),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          Text(
+            "Song Artist\n".toUpperCase(),
+            style: new TextStyle(
+                color: Colors.black.withOpacity(0.7),
+                fontSize: 14.0,
+                letterSpacing: 1.8,
+                height: 1.5,
+                fontWeight: FontWeight.w600,
+                fontFamily: "Quicksand"),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+  );
+
+  Widget _controllersRow() => Row(
+    mainAxisSize: MainAxisSize.max,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: <Widget>[
+
+      //TODO Aqui a gente deve verificar se a musica atual eh favorita, se sim,
+      // o botao ja comeca "apertado", se nao, "solto"
+      Flexible(
+        child: ChangeableIconButton(
+          initialStatus: ButtonStatus.PRIMARY,
+          primaryIcon: Icon(Icons.favorite_border, color: Colors.blueGrey ),
+          secondaryIcon: Icon(Icons.favorite, color: Colors.blueGrey),
+          size: 30.0,
+          onTap: (status){
+            // setFav(song);
+          },
+        ),
+      ),
+
+      Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
+
+      Flexible(
+        child: IconButton(
+          splashColor: Colors.blueGrey[200],
+          highlightColor: Colors.transparent,
+          icon: new Icon(
+            Icons.skip_previous,
+            color: Colors.blueGrey,
+            size: 32.0,
+          ),
+          onPressed: prev,
+        ),
+      ),
+
+      Padding(
+        padding: EdgeInsets.only(left: 20.0, right: 20.0),
+        child: FloatingActionButton(
+          backgroundColor: _animateColor.value,
+          child: new AnimatedIcon(
+              icon: AnimatedIcons.pause_play,
+              progress: _animateIcon),
+          onPressed: playPause,
+        ),
+      ),
+
+      Flexible(child: IconButton(
+        splashColor: Colors.blueGrey[200].withOpacity(0.5),
+        highlightColor: Colors.transparent,
+        icon: new Icon(
+          Icons.skip_next,
+          color: Colors.blueGrey,
+          size: 32.0,
+        ),
+        onPressed: next,
+      ), ),
+
+      Padding( padding: EdgeInsets.symmetric(horizontal: 5.0) ),
+
+      // TODO: verificar se o modo repeat estivado ou nao, para
+      //poder definir o estado inicial do botao!
+      Flexible(child: ChangeableIconButton(
+        tooltip: "Repeat",
+        initialStatus: ButtonStatus.SECONDARY,
+        primaryIcon: Icon( Icons.repeat, color: Colors.blueGrey),
+        secondaryIcon: Icon( Icons.repeat, color: Colors.blueGrey.withOpacity(0.5)),
+        size: 30.0,
+        onTap: (status){},
+      ),
+      ),
+    ],
+  );
 
   Widget portrait() {
-    double width = MediaQuery.of(context).size.width;
-    widthX = width;
+    final double width = MediaQuery.of(context).size.width;
     final double statusBarHeight = MediaQuery.of(context).padding.top;
-    sHeightX = statusBarHeight;
     final double cutRadius = 5.0;
 
     // Container with background artist image with blur effect
-    final backgroundPictureContainer = Container(
-      height: MediaQuery.of(context).size.width,
-      width:  MediaQuery.of(context).size.width,
+    final backgroundPictureContainer = _backgroundPictureContainer( width, width );
+
+    // controls container positioned
+    final spacingContainer = _spacingContainer(width: width, height: MediaQuery.of(context).size.height - width);
+
+    //blur effect in background image
+    final blurEffect = _blurEffect( width: width, height: width, sigmaX: 10, sigmaY: 15,);
+
+    final queueSongsButton = Container(
+      width: width,
       color: Colors.white,
-      // TODO fazer a logica do non null
-      child: Image.asset("images/music.jpg", fit: BoxFit.fill,), );
+      child: FlatButton(
+        onPressed: _showBottomSheet,
+        highlightColor: Colors.blueGrey[200].withOpacity(0.1),
+        child: Text("UP NEXT",
+          style: TextStyle(
+              color: Colors.black.withOpacity(0.8),
+              letterSpacing: 2.0,
+              fontFamily: "Quicksand",
+              fontWeight: FontWeight.bold),
+        ),
+        splashColor: Colors.blueGrey[200].withOpacity(0.1),
+      ),
+    );
+
+    final swipeablePicture = SwipeablePictureContainer(
+      width: width - 2 * width * 0.06,
+      height: width - width * 0.06,
+      heroTag: GlobalKey(),
+      stickerText: durationText,
+      elevation: 20.0,
+      cutRadius: cutRadius,
+      onSwipeLeft: next,
+      onSwipeRight: prev,
+      imagePath: null,
+    );
+
+    final seekBarRow = _seekBarRow(width:width * 0.85, statusBarHeight:statusBarHeight * 0.5 );
+
+    final labelsGroup = Expanded( child: _labelsGroup() );
+
+    final controllersButtonsRow = _controllersRow();
 
     return Stack(
       children: <Widget>[
         backgroundPictureContainer,
 
-        // controls container positioned
-        Positioned(
-          top: width,
-          child: Container(
-            color: Colors.white,
-            height: MediaQuery.of(context).size.height - width,
-            width: width,
-          ),
-        ),
+        Positioned(child: spacingContainer, top: width,),
 
-        //blur effect in background image
-        BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 15.0),
-          child: Container(
-            height: width,
-            decoration: BoxDecoration(color: Colors.grey[900].withOpacity(0.5)),
-          ),
-        ),
+        blurEffect,
 
-        // aligned artist artwork playing now picture widget.
         Align(
           alignment: Alignment.topCenter,
           child: Padding(
             padding: EdgeInsets.only( top: width * 0.06 * 2 ),
-            child: Container( // picture container
-              color: Colors.transparent,
-              width: width - 2 * width * 0.06,
-              height: width - width * 0.06,
-              child: new AspectRatio(
-                aspectRatio: 1.0,
-
-                child: Hero(
-                  tag: new GlobalKey(),
-                  //TODO se a musica tem imagem.. mostra o materia se nao...
-                  child: Material(
-                    color: Colors.transparent,
-                    elevation: 20.0,
-                    child: SwipeDetector(
-                      swipeConfiguration: SwipeConfiguration(
-                          horizontalSwipeMinDisplacement: 4.0,
-                          horizontalSwipeMinVelocity: 5.0,
-                          horizontalSwipeMaxHeightThreshold: 100.0),
-                      onSwipeLeft: next,
-                      onSwipeRight: prev,
-
-                      child: InkWell(
-                        onDoubleTap: () {
-                          setState(() {
-                            if (!_showArtistImage)
-                              _showArtistImage = true;
-                            else
-                              _showArtistImage = false;
-                          });
-                        },
-//                              onLongPress: _showArtistDetail,
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(cutRadius),
-                              image: DecorationImage(
-                                  // aqui eh a imagem do album da musica
-                                  // fazer a logica da imagem aqui, caso seja nula ou n
-                                  image: AssetImage("images/music.jpg") ,
-                                  fit: BoxFit.cover)),
-
-                          child: Stack(
-
-                            children: <Widget>[
-                              _showArtistImage
-                                  ? Container(
-                                width: width - 2 * width * 0.06,
-                                height: width - width * 0.06,
-                                child: Text('Artist details...'),
-                              )
-                                  : Container(),
-
-                              Positioned(
-                                bottom: - width * 0.15,
-                                right: - width * 0.15,
-                                child: Container(
-                                  decoration: ShapeDecoration(
-                                      color: Colors.white,
-                                      shape: BeveledRectangleBorder(
-                                          borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(
-                                                  width * 0.15)))),
-                                  height: width * 0.15 * 2,
-                                  width: width * 0.15 * 2,
-                                ),
-                              ),
-
-                              Positioned(
-                                bottom: 0.0,
-                                right: 0.0,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                      right: 4.0, bottom: 6.0),
-                                  child: Text(
-                                    durationText,
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 18.0,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                     /* : new Image.asset(
-                    "images/back.jpg",
-                    fit: BoxFit.fitHeight,
-                  ),*/
-                ),
-              ),
-            ),
+            /// TODO Lembrar de mudar a imagem quando a musica mudar. vai ser um StreamBuilder
+            child: swipeablePicture,
           ),
         ),
 
@@ -470,186 +560,23 @@ class _StateNowPlaying extends State<PlayingNowScreen>
           alignment: Alignment.topCenter,
           child: Padding(
             padding: EdgeInsets.only(top: width * 1.11),
-            child: Container(
-              height: MediaQuery.of(context).size.height - width * 1.11,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
 
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(positionText,style: TextStyle(
-                          fontSize: 13.0,
-                          color: Color(0xaa373737),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.0
-                      ),),
-                      Container(
-                        width: width*0.85,
-                        padding: EdgeInsets.only(
-                          left: statusBarHeight * 0.5,
-                        ),
-                        child: Slider(
-                          min: 0.0,
-                          activeColor: Colors.blueGrey.shade400.withOpacity(0.5),
-                          inactiveColor: Colors.blueGrey.shade300.withOpacity(0.3),
-                          value: position?.inMilliseconds?.toDouble() ?? 0.0, onChanged: (value ){},
-//                          onChanged: (double value) =>
-//                              player.seek((value / 1000).roundToDouble()),
-//                          max: song.duration.toDouble() + 1000,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Container(
-                        child: Column(
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.only(left: 10.0,right: 10.0),
-                              child: new Text(
-                                'Song title'.toUpperCase(),
-                                style: new TextStyle(
-                                    color: Colors.black.withOpacity(0.85),
-                                    fontSize: 17.5,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 3.0,
-                                    height: 1.5,
-                                    fontFamily: "Quicksand"),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-//                                Navigator.of(context).push(
-//                                    new MaterialPageRoute(builder: (context) {
-//                                      return new ArtistCard(widget.db, song);
-//                                    }));
-                              },
-                              child: new Text(
-                                "Song Artist\n".toUpperCase(),
-                                style: new TextStyle(
-                                    color: Colors.black.withOpacity(0.7),
-                                    fontSize: 14.0,
-                                    letterSpacing: 1.8,
-                                    height: 1.5,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: "Quicksand"),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                 seekBarRow,
+                 labelsGroup,
+
                   Expanded(
                     child: Container(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 15.0),
-                        child: new Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            new IconButton(
-                                icon: isFav == 0
-                                    ? new Icon(
-                                  Icons.favorite_border,
-                                  color: Colors.blueGrey,
-                                  size: 15.0,
-                                )
-                                    : new Icon(
-                                  Icons.favorite,
-                                  color: Colors.blueGrey,
-                                  size: 15.0,
-                                ),
-                                onPressed: () {
-                                 // setFav(song);
-                                }),
-                            Padding(
-                                padding:
-                                EdgeInsets.symmetric(horizontal: 15.0)),
-                            new IconButton(
-                              splashColor: Colors.blueGrey[200],
-                              highlightColor: Colors.transparent,
-                              icon: new Icon(
-                                Icons.skip_previous,
-                                color: Colors.blueGrey,
-                                size: 32.0,
-                              ),
-                              onPressed: prev,
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                              child: FloatingActionButton(
-                                backgroundColor: _animateColor.value,
-                                child: new AnimatedIcon(
-                                    icon: AnimatedIcons.pause_play,
-                                    progress: _animateIcon),
-                                onPressed: playPause,
-                              ),
-                            ),
-                            new IconButton(
-                              splashColor: Colors.blueGrey[200].withOpacity(0.5),
-                              highlightColor: Colors.transparent,
-                              icon: new Icon(
-                                Icons.skip_next,
-                                color: Colors.blueGrey,
-                                size: 32.0,
-                              ),
-                              onPressed: next,
-                            ),
-                            Padding(
-                                padding:
-                                EdgeInsets.symmetric(horizontal: 15.0)),
-                            new IconButton(
-                                icon: (repeatOn == 1)
-                                    ? Icon(
-                                  Icons.repeat,
-                                  color: Colors.blueGrey,
-                                  size: 15.0,
-                                )
-                                    : Icon(
-                                  Icons.repeat,
-                                  color: Colors.blueGrey.withOpacity(0.5),
-                                  size: 15.0,
-                                ),
-                                onPressed: () {
-                                  repeat1();
-                                }),
-                          ],
-                        ),
-                      ),
+                        margin: const EdgeInsets.only(bottom: 20.0),
+                        child: controllersButtonsRow
                     ),
                   ),
-                  Container(
-                    width: width,
-                    color: Colors.white,
-                    child: FlatButton(
-                      onPressed: _showBottomSheet,
-                      highlightColor: Colors.blueGrey[200].withOpacity(0.1),
-                      child: Text(
-                        "UP NEXT",
-                        style: TextStyle(
-                            color: Colors.black.withOpacity(0.8),
-                            letterSpacing: 2.0,
-                            fontFamily: "Quicksand",
-                            fontWeight: FontWeight.bold),
-                      ),
-                      splashColor: Colors.blueGrey[200].withOpacity(0.1),
-                    ),
-                  )
+                  queueSongsButton,
                 ],
               ),
-            ),
           ),
         )
       ],
@@ -659,108 +586,151 @@ class _StateNowPlaying extends State<PlayingNowScreen>
   Widget landscape() {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+
+    final swipeablePicture = SwipeablePictureContainer(
+      width: height - 2 * MediaQuery.of(context).padding.top,
+      height: height - 2 * MediaQuery.of(context).padding.top,
+      heroTag: GlobalKey(),
+      stickerText: durationText,
+      elevation: 20.0,
+      cutRadius: 6.0,
+      onSwipeLeft: next,
+      onSwipeRight: prev,
+      imagePath: null,
+    );
+
+    final seekbarRow = _seekBarRow(width: height *0.85,
+        statusBarHeight: statusBarHeight * 0.5);
+
+    //TODO Aqui a gente deve verificar se a musica atual eh favorita, se sim,
+    // o botao ja comeca "apertado", se nao, "solto"
+    final favouriteButton = Flexible(
+      child: ChangeableIconButton(
+        initialStatus: ButtonStatus.PRIMARY,
+        primaryIcon: Icon(Icons.favorite_border, color: Colors.blueGrey ),
+        secondaryIcon: Icon(Icons.favorite, color: Colors.blueGrey),
+        size: 40.0,
+        onTap: (status){
+          // setFav(song);
+        },
+      ),
+    );
+
+    // TODO: verificar se o modo repeat estivado ou nao, para
+    //poder definir o estado inicial do botao!
+    final repeatButton = Flexible(child: ChangeableIconButton(
+      tooltip: "Repeat",
+      initialStatus: ButtonStatus.SECONDARY,
+      primaryIcon: Icon( Icons.repeat, color: Colors.blueGrey),
+      secondaryIcon: Icon( Icons.repeat, color: Colors.blueGrey.withOpacity(0.5)),
+      size: 40.0,
+      onTap: (status){},),
+    );
+
+    final controllers = Row(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+
+        Flexible(
+          child: IconButton(
+            splashColor: Colors.blueGrey[200],
+            highlightColor: Colors.transparent,
+            icon: new Icon(
+              Icons.skip_previous,
+              color: Colors.blueGrey,
+              size: 32.0,
+            ),
+            onPressed: prev,
+          ),
+        ),
+
+        Padding(
+          padding: EdgeInsets.only(left: 20.0, right: 20.0),
+          child: FloatingActionButton(
+            backgroundColor: _animateColor.value,
+            child: new AnimatedIcon(
+                icon: AnimatedIcons.pause_play,
+                progress: _animateIcon),
+            onPressed: playPause,
+          ),
+        ),
+
+        Flexible(child: IconButton(
+          splashColor: Colors.blueGrey[200].withOpacity(0.5),
+          highlightColor: Colors.transparent,
+          icon: new Icon(
+            Icons.skip_next,
+            color: Colors.blueGrey,
+            size: 32.0,
+          ),
+          onPressed: next,
+        ), ),
+      ],
+    );
+
     return Container(
-      color: Color(0xfffafafa),
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
+      color: Colors.white,
+      width: width,
+      height: height,
       child: Stack(
         children: <Widget>[
-          Positioned(
-            top: 0.0,
-            left: 0.0,
-            child: Container(
-                height: MediaQuery.of(context).size.height,
-                width: height - height * 0.12,
-                color: Colors.white,
-                child: /*getImage(song) != null
-                    ? Image.file(getImage(song), fit: BoxFit.cover)
-                    : */Image.asset("images/music.jpg")),
+
+          Align(
+            alignment: Alignment.topLeft,
+            child: _backgroundPictureContainer( height - height * 0.12, height),
           ),
-          BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: Container(
-              height: height,
-              width: height - height * 0.12,
-              decoration:
-              new BoxDecoration(color: Colors.grey[900].withOpacity(0.5)),
+
+          Positioned(
+            left: height - 2 * MediaQuery.of(context).padding.top,
+            child: Padding(
+              padding: EdgeInsets.only(left: .0),
+              child: _spacingContainer(width: height * 0.12, height: height),
             ),
           ),
+
+          _blurEffect(width: height - height * 0.12, height: height,sigmaX: 10.0, sigmaY: 10.0),
+
+          Positioned(
+            left: height - 1.5 * MediaQuery.of(context).padding.top,
+            child: Container(
+              width: height - height * 0.12,
+              height: height,
+              //color: Colors.red,
+              child: Padding(
+                  padding: EdgeInsets.only(left: 20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+
+                    Center( child: _labelsGroup(),),
+                    favouriteButton,
+                    Container(
+                      height: 90,
+                      child:controllers,
+                    ),
+                    repeatButton,
+                    seekbarRow,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           Align(
             alignment: Alignment.topLeft,
             child: Padding(
               padding: EdgeInsets.only(
                   left: MediaQuery.of(context).padding.top,
                   top: MediaQuery.of(context).padding.top),
-              child: Container(
-                width: height - 2 * MediaQuery.of(context).padding.top,
-                height: height - 2 * MediaQuery.of(context).padding.top,
-                child: new AspectRatio(
-                  aspectRatio: 15 / 15,
-                  child: Hero(
-                    tag: GlobalKey(),
-                    child: // TODO Se a imagem  da musica nao for nula
-                    Material(
-                      color: Colors.transparent,
-                      elevation: 22.0,
-                      child: SwipeDetector(
-                        swipeConfiguration: SwipeConfiguration(
-                            horizontalSwipeMinDisplacement: 4.0,
-                            horizontalSwipeMinVelocity: 5.0,
-                            horizontalSwipeMaxHeightThreshold: 100.0),
-                        onSwipeLeft: next,
-                        onSwipeRight: prev,
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(6.0),
-                              image: DecorationImage(
-                                  image: AssetImage("images/music.jpg"),
-                                  fit: BoxFit.cover)),
-                          child: Stack(
-                            children: <Widget>[
-                              Positioned(
-                                bottom: -width * 0.15,
-                                right: -width * 0.15,
-                                child: Container(
-                                  decoration: ShapeDecoration(
-                                      color: Colors.white,
-                                      shape: BeveledRectangleBorder(
-                                          borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(
-                                                  width * 0.15)))),
-                                  height: width * 0.15 * 2,
-                                  width: width * 0.15 * 2,
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0.0,
-                                right: 0.0,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                      right: 4.0, bottom: 6.0),
-                                  child: Text(
-                                    durationText,
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 18.0),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                        /*: new Image.asset(
-                      "images/back.jpg",
-                      fit: BoxFit.fitHeight,
-                    ),*/
-                  ),
-                ),
-              ),
+              /// TODO Lembrar de mudar a imagem quando a musica mudar. vai ser um StreamBuilder
+              child: swipeablePicture,
             ),
-          )
+          ),
+
         ],
       ),
     );

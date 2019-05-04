@@ -75,6 +75,8 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
 //        ],
 //      ),
 //    );
+
+    Orientation orientation =  MediaQuery.of(context).orientation;
     final sliverAppBar = SliverAppBar(
       floating: false,
       elevation: 0.0,
@@ -129,20 +131,35 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
 
           if (snapshot.data.isEmpty)
             return NoDataWidget(title: "There is no artists");
-          return GridView.builder(
-              itemCount: snapshot.data.length,
-              gridDelegate:
-                  SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
-              itemBuilder: (context, index) {
-                return CardItemWidget(
-                  title: snapshot.data[index].name,
-                  backgroundImage: snapshot.data[index].artistArtPath,
-                  height: 250.0,
-                  elevation: 8.0,
-                );
-              });
-        },
-      ),
-    );
-  }
+
+          if (orientation == Orientation.portrait)
+            return GridView.builder(
+                itemCount: snapshot.data.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2),
+                itemBuilder: (context, index) {
+                  return CardItemWidget(
+                    title: snapshot.data[index].name,
+                    backgroundImage: snapshot.data[index].artistArtPath,
+                    height: 250.0,
+                    elevation: 8.0,
+                  );
+                });
+          else
+            return GridView.builder(
+                itemCount: snapshot.data.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4),
+                itemBuilder: (context, index) {
+                  return CardItemWidget(
+                    title: snapshot.data[index].name,
+                    backgroundImage: snapshot.data[index].artistArtPath,
+                    width: 100,
+                    elevation: 8.0,
+                  );
+                });
+          },
+        ),
+      );
+   }
 }
