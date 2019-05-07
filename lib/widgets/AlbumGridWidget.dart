@@ -1,11 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:party_player/bloc/ScrollingBloc.dart';
+import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:party_player/bloc/widgetBloc/AlbumGridWidgetBloc.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
-import 'package:rxdart/rxdart.dart';
-import 'package:flutter_audio_query/flutter_audio_query.dart';
 
 class AlbumGridWidget extends StatefulWidget {
   final AlbumGridWidgetBloc _bloc = new AlbumGridWidgetBloc();
@@ -177,37 +176,6 @@ class _AlbumGridWidgetState extends State<AlbumGridWidget> {
   @override
   void dispose() {
     widget._bloc?.dispose();
-    super.dispose();
-  }
-}
-
-class AlbumGridWidgetBloc extends ScrollingBloc {
-  final FlutterAudioQuery audioQuery = FlutterAudioQuery();
-
-  final BehaviorSubject<List<AlbumInfo>> _albumSubject = BehaviorSubject();
-  Observable<List<AlbumInfo>> get albumStream => _albumSubject.stream;
-
-  AlbumSortType _currentSortType = AlbumSortType.DEFAULT;
-  AlbumSortType get currentSortType => _currentSortType;
-
-  loadAlbums({final AlbumSortType sortType = AlbumSortType.DEFAULT}) {
-    if (sortType != _currentSortType) {
-      addToSink(null);
-      _currentSortType = sortType;
-    }
-
-    audioQuery
-        .getAlbums(sortType: _currentSortType)
-        .then(addToSink)
-        .catchError(addError);
-  }
-
-  addToSink(final List<AlbumInfo> data) => _albumSubject.sink.add(data);
-  addError(final Object error) => _albumSubject.sink.addError(error);
-
-  @override
-  void dispose() {
-    _albumSubject?.close();
     super.dispose();
   }
 }
