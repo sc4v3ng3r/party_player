@@ -4,8 +4,10 @@ import 'dart:ui' as ui;
 //import 'package:musicplayer/pages/artistcard.dart';
 //import 'package:musicplayer/util/artistInfo.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:party_player/bloc/ApplicationBloc.dart';
 import 'package:party_player/widgets/ChangeableButton.dart';
 import 'package:party_player/widgets/SwipeablePictureContainer.dart';
+import 'package:provider/provider.dart';
 import 'package:swipedetector/swipedetector.dart';
 //import 'package:flute_music_player/flute_music_player.dart';
 import 'package:flutter/material.dart';
@@ -206,6 +208,9 @@ class _StateNowPlaying extends State<PlayingNowScreen>
   @override
   Widget build(BuildContext context) {
     orientation = MediaQuery.of(context).orientation;
+
+    ApplicationBloc myBloc = Provider.of<ApplicationBloc>(context);
+
     return Scaffold(
       key: scaffoldState,
       body: orientation == Orientation.portrait ? portrait() : landscape(),
@@ -249,7 +254,7 @@ class _StateNowPlaying extends State<PlayingNowScreen>
                               : new */Text(
                               'Song Title if has no image'.toUpperCase()),
                         ),
-                        title: new Text('Song TItle',
+                        title: new Text('Song Title',
                             maxLines: 1,
                             style: new TextStyle(fontSize: 16.0)),
                         subtitle: Row(
@@ -359,16 +364,18 @@ class _StateNowPlaying extends State<PlayingNowScreen>
           fontWeight: FontWeight.w600,
           letterSpacing: 1.0
       ),),
+
       Container(
         width: width * 0.85,
-        padding: EdgeInsets.only(
-          left: statusBarHeight * 0.5,
-        ),
+        padding: EdgeInsets.only(left: statusBarHeight * 0.5,),
+
         child: Slider(
           min: 0.0,
-          activeColor: Colors.blueGrey.shade400.withOpacity(0.5),
+          max: 600000,
+
+          activeColor: Colors.blueGrey.shade400,
           inactiveColor: Colors.blueGrey.shade300.withOpacity(0.3),
-          value: position?.inMilliseconds?.toDouble() ?? 0.0,
+          value: .0,//position?.inMilliseconds?.toDouble() ?? 0.0,
           onChanged: (value ){},
 //             onChanged: (double value) =>
 //               player.seek((value / 1000).roundToDouble()),

@@ -1,33 +1,29 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:party_player/bloc/ScrollingBloc.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
-
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_audio_query/flutter_audio_query.dart';
 
-class ArtistGridWidget extends StatefulWidget {
-  final ArtistGridWidgetBloc _bloc = ArtistGridWidgetBloc();
+class AlbumGridWidget extends StatefulWidget {
+  final AlbumGridWidgetBloc _bloc = new AlbumGridWidgetBloc();
 
   @override
-  _ArtistGridWidgetState createState() => _ArtistGridWidgetState();
+  _AlbumGridWidgetState createState() => _AlbumGridWidgetState();
 }
 
-class _ArtistGridWidgetState extends State<ArtistGridWidget> {
+class _AlbumGridWidgetState extends State<AlbumGridWidget> {
   @override
   void initState() {
-    widget._bloc.loadArtists();
+    widget._bloc.loadAlbums();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-
-    Orientation orientation = MediaQuery.of(context).orientation;
-//    final width = MediaQuery.of(context).size.width;
-//    final height = MediaQuery.of(context).size.height;
+    final Orientation orientation = MediaQuery.of(context).orientation;
 
     final sliverAppBar = SliverAppBar(
       expandedHeight: 50,
@@ -36,7 +32,7 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
       pinned: false,
       snap: true,
 
-      title: Text("Artists",
+      title: Text("Albums",
           style: TextStyle(
               color: Colors.white,
               fontSize: 20.0,
@@ -45,6 +41,7 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
               letterSpacing: 1.0)),
       backgroundColor: Colors.blueGrey[400],
       brightness: Brightness.dark,
+      //leading: _leading,
 
       actions: <Widget>[
         IconButton(
@@ -58,36 +55,27 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
               print('search clicked');
             }),
       ],
-
-      flexibleSpace: new FlexibleSpaceBar(
-        background: new Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            new Image.asset(
-              "images/music.jpg",
-              fit: BoxFit.fitWidth,
-            ),
-          ],
-        ),
-      ),
     );
 
-    return StreamBuilder<List<ArtistInfo>>(
-      stream: widget._bloc.artistStream,
+    return StreamBuilder<List<AlbumInfo>>(
+      stream: widget._bloc.albumStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData)
-          return Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Center( child: CircularProgressIndicator(),),
-            ],
+          return Center(
+            child: CircularProgressIndicator(),
           );
 
-        if (snapshot.hasError) return Text('${snapshot.error}');
+        if (snapshot.hasError)
+          return Center(
+            child: Text('${snapshot.error}'),
+          );
 
         if (snapshot.data.isEmpty)
-          return NoDataWidget(title: "There is no artists");
+          return Center(
+            child: NoDataWidget(
+              title: 'There is no songs',
+            ),
+          );
 
         return Stack(
           children: <Widget>[
@@ -101,12 +89,14 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
                       ? SliverGrid(
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
                                   mainAxisSpacing: 4.0,
                                   crossAxisSpacing: 2.0,
-                                  crossAxisCount: 2),
+                              ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
-                              return _buildItem(snapshot.data[index], height: 250);
+                              return _buildItem(snapshot.data[index],
+                                  height: 250);
                             },
                             childCount: snapshot.data.length,
                           ))
@@ -124,6 +114,8 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
                 ],
               ),
             ),
+
+            // float action button
             Align(
               child: Padding(
                   padding: const EdgeInsets.only(bottom: 12.0, right: 8.0),
@@ -142,12 +134,14 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
     );
   }
 
-  Widget _buildItem(ArtistInfo data, {double width, double height} ){
+  /// Method to create gridView items
+  Widget _buildItem(AlbumInfo data, {double width, double height}) {
     return Stack(
       children: <Widget>[
         CardItemWidget(
-          title: data.name,
-          backgroundImage: data.artistArtPath,
+          title: data.title,
+          subtitle: data.artist,
+          backgroundImage: data.albumArt,
           width: width,
           height: height,
           elevation: 8.0,
@@ -156,8 +150,7 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
-              borderRadius:
-              BorderRadius.circular(6.0),
+              borderRadius: BorderRadius.circular(6.0),
               onTap: () {},
             ),
           ),
@@ -166,6 +159,7 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
     );
   }
 
+  /// Method that returns a float action button
   Widget _createFAB() => AnimatedOpacity(
         opacity: 1.0,
         duration: Duration(seconds: 1),
@@ -182,39 +176,38 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
 
   @override
   void dispose() {
-    widget._bloc.dispose();
+    widget._bloc?.dispose();
     super.dispose();
   }
 }
 
-class ArtistGridWidgetBloc extends ScrollingBloc {
+class AlbumGridWidgetBloc extends ScrollingBloc {
   final FlutterAudioQuery audioQuery = FlutterAudioQuery();
 
-  BehaviorSubject<List<ArtistInfo>> _artistSubject = BehaviorSubject();
-  Observable<List<ArtistInfo>> get artistStream => _artistSubject.stream;
+  final BehaviorSubject<List<AlbumInfo>> _albumSubject = BehaviorSubject();
+  Observable<List<AlbumInfo>> get albumStream => _albumSubject.stream;
 
-  ArtistSortType _currentSortType = ArtistSortType.DEFAULT;
-  ArtistSortType get currentSortType => _currentSortType;
+  AlbumSortType _currentSortType = AlbumSortType.DEFAULT;
+  AlbumSortType get currentSortType => _currentSortType;
 
-
-  void loadArtists({ArtistSortType sortType = ArtistSortType.DEFAULT}) {
+  loadAlbums({final AlbumSortType sortType = AlbumSortType.DEFAULT}) {
     if (sortType != _currentSortType) {
-      addArtistToSink(null);
+      addToSink(null);
       _currentSortType = sortType;
     }
 
     audioQuery
-        .getArtists(sortType: _currentSortType)
-        .then(addArtistToSink)
-        .catchError(addArtistError);
+        .getAlbums(sortType: _currentSortType)
+        .then(addToSink)
+        .catchError(addError);
   }
 
-  addArtistToSink(final List<ArtistInfo> data) => _artistSubject.sink.add(data);
-  addArtistError(final Object error) => _artistSubject.sink.addError(error);
+  addToSink(final List<AlbumInfo> data) => _albumSubject.sink.add(data);
+  addError(final Object error) => _albumSubject.sink.addError(error);
 
   @override
   void dispose() {
-    _artistSubject?.close();
+    _albumSubject?.close();
     super.dispose();
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class CardItemWidget extends StatelessWidget {
   final double width, height, elevation;
   final String backgroundImage, title, subtitle;
+
   static const titleMaxLines = 2;
   static const titleTextStyle =
       TextStyle(fontWeight: FontWeight.w500, fontSize: 16.0);
@@ -14,12 +15,13 @@ class CardItemWidget extends StatelessWidget {
       {this.width,
       this.height,
       this.backgroundImage,
-      this.title = "Title",
+      this.title='',
       this.elevation = 4.0,
-      this.subtitle = "subtitle"});
+      this.subtitle});
 
   @override
   Widget build(BuildContext context) {
+
     final mainContainer = Container(
       width: width,
       height: height,
@@ -29,7 +31,7 @@ class CardItemWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(6.0),
         image: DecorationImage(
           image: (backgroundImage == null)
-              ? AssetImage("images/music.jpg")
+              ? AssetImage("images/artist.jpg")
               : FileImage(File(backgroundImage)),
           fit: BoxFit.cover,
           alignment: AlignmentDirectional.center,
@@ -50,11 +52,12 @@ class CardItemWidget extends StatelessWidget {
               children: <Widget>[
                 Flexible(
                     child: Text(
-                  title,
+                    title,
                   maxLines: titleMaxLines,
+                  textAlign: (subtitle == null) ? TextAlign.center : TextAlign.left,
                   style: titleTextStyle,
                 )),
-                Flexible(child: Text(subtitle)),
+                (subtitle != null) ? Flexible(child: Text(subtitle)) : Container(width: .0,height: .0,),
               ],
             ),
           ),

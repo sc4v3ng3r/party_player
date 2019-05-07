@@ -28,6 +28,7 @@ class _HomeState extends State<Home> {
       floating: false,
       elevation: 0.0,
       pinned: false,
+      snap: false,
       primary: true,
       title: Text("Home",
           style: TextStyle(
@@ -36,23 +37,18 @@ class _HomeState extends State<Home> {
               fontFamily: "Quicksand",
               fontWeight: FontWeight.w600,
               letterSpacing: 1.0)),
-      backgroundColor: Colors.white30,
+      backgroundColor: Colors.blueGrey[400],
       brightness: Brightness.dark,
       leading: _leading,
 
       actions: <Widget>[
-        new IconButton(
+        IconButton(
+            splashColor: Colors.blueGrey[400].withOpacity(0.5),
             icon: Icon(
               Icons.info_outline,
-              color: Colors.white,
             ),
-            onPressed: () {}),
-        new IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              print('search clicked');
-              // showSearch(context: context, delegate: SearchSong());
-            })
+            onPressed: () {}
+        ),
       ],
 
       flexibleSpace: new FlexibleSpaceBar(

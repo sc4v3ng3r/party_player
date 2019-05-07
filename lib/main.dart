@@ -1,27 +1,38 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:party_player/Home.dart';
+import 'package:party_player/bloc/ApplicationBloc.dart';
 import 'package:party_player/screens/PlayingNowScreen.dart';
+import 'package:party_player/widgets/AlbumGridWidget.dart';
 import 'package:party_player/widgets/ArtistGridWidget.dart';
 import 'package:party_player/widgets/BottomBar.dart';
+import 'package:party_player/widgets/SongListWidget.dart';
+import 'package:provider/provider.dart';
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
+  final ApplicationBloc bloc = ApplicationBloc();
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-
+    return Provider<ApplicationBloc>(
+      builder: (_) => bloc,
+      dispose: (_, value) { print(' o metodo esperado'); },
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: MainWidget(title: "PartyPlayer",),
       ),
-      home: MainWidget(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
+
+// TODO: Isso aqui devera ir para outro arquivo
 
 class MainWidget extends StatefulWidget {
 
@@ -34,8 +45,8 @@ class MainWidget extends StatefulWidget {
 
   MainWidget({Key key, this.title}) : super(key: key);
   final String title;
-  final List<BottomBarItem> _bottomActions = [
 
+  final List<BottomBarItem> _bottomActions = [
     BottomBarItem(
       iconData: Icons.home,
       text: TITLES_MAP[HomePageNavigation.HOME],
@@ -65,7 +76,8 @@ class MainWidget extends StatefulWidget {
 class _MainWidgetState extends State<MainWidget> {
 
   final HomePageBloc bloc = HomePageBloc();
-  
+  ApplicationBloc _appBloc;
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +85,7 @@ class _MainWidgetState extends State<MainWidget> {
 
   @override
   Widget build(BuildContext context) {
+    _appBloc ??= Provider.of<ApplicationBloc>(context);
     return Scaffold(
 
       body: StreamBuilder<HomePageNavigation>(
@@ -94,10 +107,10 @@ class _MainWidgetState extends State<MainWidget> {
               return ArtistGridWidget();
 
             case HomePageNavigation.ALBUMS:
-              return Center(child: Text('Albums'),);
+              return AlbumGridWidget();
 
             case HomePageNavigation.SONGS:
-              return Center(child: Text('Songs'),);
+              return SongListWidget();
           }
         }
       ),
@@ -117,21 +130,24 @@ class _MainWidgetState extends State<MainWidget> {
             Navigator.push(context,
               MaterialPageRoute(
                   builder: (context){
-                    return PlayingNowScreen(0);
+                    return Provider<ApplicationBloc>(
+                      builder: (_) => _appBloc,
+                        child: PlayingNowScreen(0),
+                        dispose: (context, value) { print("Provider for PlayingNow Screen dipose call"); },
+                    );
                   }
               )
             );
           }
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
     );
   }
   
   @override
   void dispose() {
     bloc?.dispose();
+    print("MainWidget dispose");
     super.dispose();
   }
 }
@@ -141,8 +157,36 @@ enum HomePageNavigation {HOME, ARTISTS, ALBUMS, SONGS, }
 class HomePageBloc {
   final StreamController<HomePageNavigation> _navigationController = StreamController.broadcast();
   Stream get navigationStream => _navigationController.stream;
-  
+
   void setNavigationState(final HomePageNavigation option) => _navigationController.sink.add(option);
   
   void dispose() => _navigationController?.close();
 }
+
+//
+//class SplashScreen extends StatelessWidget {
+//  @override
+//  Widget build(BuildContext context) {
+//    return Container(
+//      color: Colors.grey.withOpacity(0.7),
+//      child: Directionality(
+//        textDirection: TextDirection.ltr,
+//        child: Stack(
+//          children: <Widget>[
+//            Positioned.fill(
+//                child: Column(
+//                    mainAxisSize: MainAxisSize.max,
+//                    mainAxisAlignment: MainAxisAlignment.center,
+//                    children: <Widget>[
+//                      Center(
+//                        child: CircularProgressIndicator(),
+//                      ),
+//                    ],
+//                ),
+//            ),
+//          ],
+//        ),
+//      ),
+//    );
+//  }
+//}

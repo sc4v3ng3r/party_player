@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 enum ButtonStatus {PRIMARY, SECONDARY }
 
-typedef Callback = void Function(final ButtonStatus);
+typedef Callback = void Function( ButtonStatus);
 
 class ChangeableIconButton extends StatefulWidget {   
   final Icon primaryIcon, secondaryIcon;
