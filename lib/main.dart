@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:party_player/Home.dart';
+import 'package:party_player/HomeWidget.dart';
 import 'package:party_player/bloc/ApplicationBloc.dart';
 import 'package:party_player/screens/PlayingNowScreen.dart';
 import 'package:party_player/widgets/AlbumGridWidget.dart';
@@ -75,7 +75,7 @@ class MainWidget extends StatefulWidget {
 
 class _MainWidgetState extends State<MainWidget> {
 
-  final HomePageBloc bloc = HomePageBloc();
+  final NavigationBloc bloc = NavigationBloc();
   ApplicationBloc _appBloc;
 
   @override
@@ -101,7 +101,7 @@ class _MainWidgetState extends State<MainWidget> {
 
           switch(snapshot.data){
             case HomePageNavigation.HOME:
-              return Home();
+              return HomeWidget();
 
             case HomePageNavigation.ARTISTS:
               return ArtistGridWidget();
@@ -154,7 +154,7 @@ class _MainWidgetState extends State<MainWidget> {
 
 enum HomePageNavigation {HOME, ARTISTS, ALBUMS, SONGS, }
 
-class HomePageBloc {
+class NavigationBloc {
   final StreamController<HomePageNavigation> _navigationController = StreamController.broadcast();
   Stream get navigationStream => _navigationController.stream;
 

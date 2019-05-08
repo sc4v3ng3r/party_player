@@ -16,21 +16,6 @@ class CircularItemWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-//          new SizedBox(
-//              child: Hero(
-//                tag: title,
-//                child: (imagePath != null ) //Artist Image
-//                    ? Container(
-//                  height: 100.0,
-//                  width: 100.0,
-//                  child: Material(
-//                    elevation: 25.0,
-//                    color: Colors.transparent,
-//                    shape: CircleBorder(),
-//                    child: ClipRRect(borderRadius: BorderRadius.circular(65.0),
-//                        child: Image.file(File(imagePath)))
-//                  ),
-//                ) :
                 Hero(
                   tag: this.tag,
                   child: Material(

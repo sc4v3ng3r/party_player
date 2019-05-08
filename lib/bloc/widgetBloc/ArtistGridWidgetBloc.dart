@@ -1,6 +1,5 @@
 import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:rxdart/rxdart.dart';
-
 import '../ScrollingBloc.dart';
 
 class ArtistGridWidgetBloc extends ScrollingBloc {
@@ -11,7 +10,6 @@ class ArtistGridWidgetBloc extends ScrollingBloc {
 
   ArtistSortType _currentSortType = ArtistSortType.DEFAULT;
   ArtistSortType get currentSortType => _currentSortType;
-
 
   void loadArtists({ArtistSortType sortType = ArtistSortType.DEFAULT}) {
     if (sortType != _currentSortType) {

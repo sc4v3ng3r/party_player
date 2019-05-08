@@ -1,18 +1,26 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:party_player/bloc/BlocInterface.dart';
 import 'package:party_player/widgets/ActionButton.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/CircularItemWidget.dart';
 import 'package:party_player/widgets/SectionTitle.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:rxdart/rxdart.dart';
 
-class Home extends StatefulWidget {
+import 'widgets/DisplayItem.dart';
+
+class HomeWidget extends StatefulWidget {
+  //final HomeWidgetBloc _bloc = HomeWidgetBloc();
+
   @override
-  _HomeState createState() => _HomeState();
+  _HomeWidgetState createState() => _HomeWidgetState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeWidgetState extends State<HomeWidget> {
   final FlutterAudioQuery audioQuery = FlutterAudioQuery();
+  final HomeWidgetBloc _bloc = HomeWidgetBloc();
 
   static final Widget _leading = Padding(
     child: Image.asset("images/icon.png",),
@@ -20,8 +28,17 @@ class _HomeState extends State<Home> {
   );
 
   @override
+  void initState() {
+    super.initState();
+
+    _bloc.initData();
+  }
+
+
+  @override
   Widget build(BuildContext context) {
     final Orientation orientation = MediaQuery.of(context).orientation;
+
 
     final sliverAppBar = SliverAppBar(
       expandedHeight: 200.0,
@@ -142,11 +159,13 @@ class _HomeState extends State<Home> {
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle(title: "TOP ALBUMS",),
 
-            FutureBuilder<List<AlbumInfo>>(
-              future: audioQuery.getAlbums(),
+            StreamBuilder<List<AlbumInfo>>(
+              stream: _bloc.topAlbumsStream,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return CircularProgressIndicator();
-                if (snapshot.hasError) return Text('${snapshot.error}');
+                if (!snapshot.hasData) {
+                  if (snapshot.hasError) return Text('${snapshot.error}');
+                  else return CircularProgressIndicator();
+                }
                 return Container(
                   height: 200.0,
                   child: ListView.builder(
@@ -165,6 +184,7 @@ class _HomeState extends State<Home> {
                               subtitle: snapshot.data[index].artist,
                               backgroundImage: snapshot.data[index].albumArt,
                             ),
+
                             Positioned.fill(
                               child: Material(
                                 color: Colors.transparent,
@@ -183,17 +203,19 @@ class _HomeState extends State<Home> {
             //Top Artists
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle(title: "TOP ARTISTS",),
-            FutureBuilder<List<ArtistInfo>>(
-              future: audioQuery.getArtists(
-                  sortType: ArtistSortType.MORE_ALBUMS_NUMBER_FIRST),
+            StreamBuilder<List<ArtistInfo>>(
+              stream: _bloc.topArtistsStream,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return CircularProgressIndicator();
-                if (snapshot.hasError) return Text('${snapshot.error}');
+
+                if (!snapshot.hasData) {
+                  if (snapshot.hasError) return Text('${snapshot.error}');
+                  else return CircularProgressIndicator();
+                }
 
                 return Container(
                   height: 180.0,
                   child: ListView.builder(
-                      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
+                      //padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
                       shrinkWrap: true,
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
@@ -216,15 +238,68 @@ class _HomeState extends State<Home> {
             ),
             Text('FAVOURITES body'), //topArtists(),
 
+            Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
+            SectionTitle( title: "GENRES",),
+//            Text('Genres available'),
+
+            StreamBuilder<List<GenreInfo>>(
+              stream: _bloc.genresStream,
+              builder: (context, snapshot){
+                if (!snapshot.hasData) {
+                  if (snapshot.hasError)
+                    return Text('${snapshot.error}');
+                  else return CircularProgressIndicator();
+                }
+
+                if (snapshot.data.isEmpty)
+                  return Center(child: Text('There is no playlist'));
+
+                return Container(
+                  height: 180.0,
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      mainAxisSpacing: 4.0,
+                      crossAxisSpacing: 8.0,
+                      childAspectRatio: .8,
+                      crossAxisCount: 2,
+                    ),
+                      shrinkWrap: true,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, index){
+                        return Stack(
+                          children: <Widget>[
+                            DisplayItem(
+                              title: snapshot.data[index].name,
+                            ),
+
+                            Positioned.fill(
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: (){},
+                                  ),
+                                ),
+                            ),
+                          ],
+                        );
+                      }
+                  ),
+                );
+              },
+            ),
 
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle( title: "YOUR PLAYLISTS",),
-            FutureBuilder<List<PlaylistInfo>>(
-              future: audioQuery.getPlaylists(
-                  sortType: PlaylistSortType.NEWEST_FIRST),
+            StreamBuilder<List<PlaylistInfo>>(
+              stream: _bloc.playlistStream,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return CircularProgressIndicator();
-                if (snapshot.hasError) return Text('${snapshot.error}');
+
+                if (!snapshot.hasData) {
+                  if (snapshot.hasError)
+                    return Text('${snapshot.error}');
+                  else return CircularProgressIndicator();
+                }
 
                 if (snapshot.data.isEmpty)
                   return Center(child: Text('There is no playlist'));
@@ -257,15 +332,117 @@ class _HomeState extends State<Home> {
                 );
               },
             ),
+          ],
 
-            Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
-            SectionTitle( title: "GENRES",),
-            Text('Genres available'),
-          ]),
+          ),
         ),
       ],
     );
   }
+
+  @override
+  void dispose() {
+    _bloc?.dispose();
+    super.dispose();
+  }
+}
+
+class HomeWidgetBloc extends BlocInterface {
+
+  final FlutterAudioQuery audioQuery = FlutterAudioQuery();
+
+  final BehaviorSubject< List<AlbumInfo> > _topAlbumsSubject = BehaviorSubject();
+  Observable<List<AlbumInfo>> get topAlbumsStream => _topAlbumsSubject.stream;
+
+  final BehaviorSubject<List<ArtistInfo>> _topArtistSubject = BehaviorSubject();
+  Observable<List<ArtistInfo>> get topArtistsStream => _topArtistSubject.stream;
+
+  final BehaviorSubject<List<PlaylistInfo>> _playlistSubject = BehaviorSubject();
+  Observable< List<PlaylistInfo> > get playlistStream => _playlistSubject.stream;
+
+  final BehaviorSubject<List<GenreInfo>> _genreSubject = BehaviorSubject();
+  Observable<List<GenreInfo>> get genresStream => _genreSubject.stream;
+
+  void loadTopArtists({ArtistSortType sortType = ArtistSortType.DEFAULT}) {
+
+//    addArtistToSink(null);
+
+    audioQuery
+        .getArtists(sortType: ArtistSortType.MORE_ALBUMS_NUMBER_FIRST)
+        .then(addArtistToSink)
+        .catchError(addArtistError);
+  }
+
+  void initData() async {
+    try {
+      List<AlbumInfo> topAlbums = await audioQuery.getAlbums(sortType: AlbumSortType.MOST_RECENT_YEAR);
+      if (topAlbums != null){
+        addAlbumToSink(topAlbums);
+        loadTopArtists();
+        loadPlaylists(sortType: PlaylistSortType.NEWEST_FIRST);
+        loadGenres();
+      }
+    }
+
+    on PlatformException catch(ex){
+      addArtistError(ex.code);
+      addAlbumError(ex.code);
+      addPlaylistError(ex.code);
+    }
+
+  }
+
+  addArtistToSink(final List<ArtistInfo> data) => _topArtistSubject.sink.add(data);
+  addArtistError(final Object error) => _topArtistSubject.sink.addError(error);
+
+  loadAlbums({final AlbumSortType sortType = AlbumSortType.DEFAULT}) {
+
+//    addAlbumToSink(null);
+
+    audioQuery
+        .getAlbums()
+        .then(addAlbumToSink)
+        .catchError(addAlbumError);
+  }
+
+  addAlbumToSink(final List<AlbumInfo> data) => _topAlbumsSubject.sink.add(data);
+  addAlbumError(final Object error) => _topAlbumsSubject.sink.addError(error);
+
+
+  loadPlaylists( {PlaylistSortType sortType = PlaylistSortType.DEFAULT} ){
+//    addPlaylistSink(null);
+
+    audioQuery.getPlaylists()
+        .then( addPlaylistSink )
+        .catchError( addPlaylistError );
+  }
+
+  addPlaylistSink(final List<PlaylistInfo> data) => _playlistSubject.sink.add(data);
+  addPlaylistError( final Object error ) => _playlistSubject.sink.addError(error);
+
+
+  loadGenres() async {
+//    addGenreError(null);
+    List<GenreInfo> genres = await audioQuery.getGenres();
+    genres.forEach( (genre) {
+
+    } );
+    audioQuery.getGenres()
+        .then( addGenreToSink )
+        .catchError( addGenreError );
+  }
+
+  addGenreToSink(final List<GenreInfo> data) => _genreSubject.sink.add(data);
+  addGenreError( final Object error ) => _genreSubject.sink.addError( error );
+
+  @override
+  void dispose() {
+    _topArtistSubject?.close();
+    _topAlbumsSubject?.close();
+    _genreSubject?.close();
+    _playlistSubject?.close();
+  }
+
 }
 
 /*
