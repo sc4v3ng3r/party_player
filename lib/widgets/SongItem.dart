@@ -23,11 +23,13 @@ class SongItem extends StatelessWidget {
 
       title: new Text(songTitle,
           maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: new TextStyle(color: Colors.black,fontSize: 16.0,)),
 
       subtitle: new Text(
         songArtist,
         maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: new TextStyle(fontSize: 12.0, color: Colors.grey),
       ),
 

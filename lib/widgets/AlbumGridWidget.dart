@@ -5,24 +5,14 @@ import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:party_player/bloc/widgetBloc/AlbumGridWidgetBloc.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
+import 'package:provider/provider.dart';
 
-class AlbumGridWidget extends StatefulWidget {
-  final AlbumGridWidgetBloc _bloc = new AlbumGridWidgetBloc();
-
-  @override
-  _AlbumGridWidgetState createState() => _AlbumGridWidgetState();
-}
-
-class _AlbumGridWidgetState extends State<AlbumGridWidget> {
-  @override
-  void initState() {
-    widget._bloc.loadAlbums();
-    super.initState();
-  }
+class AlbumGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
     final Orientation orientation = MediaQuery.of(context).orientation;
+    AlbumGridWidgetBloc bloc = Provider.of<AlbumGridWidgetBloc>(context);
 
     final sliverAppBar = SliverAppBar(
       expandedHeight: 50,
@@ -40,7 +30,6 @@ class _AlbumGridWidgetState extends State<AlbumGridWidget> {
               letterSpacing: 1.0)),
       backgroundColor: Colors.blueGrey[400],
       brightness: Brightness.dark,
-      //leading: _leading,
 
       actions: <Widget>[
         IconButton(
@@ -57,7 +46,7 @@ class _AlbumGridWidgetState extends State<AlbumGridWidget> {
     );
 
     return StreamBuilder<List<AlbumInfo>>(
-      stream: widget._bloc.albumStream,
+      stream: bloc.albumStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData)
           return Center(
@@ -80,7 +69,7 @@ class _AlbumGridWidgetState extends State<AlbumGridWidget> {
           children: <Widget>[
             NotificationListener<ScrollNotification>(
               onNotification: (notification) =>
-                  widget._bloc.addNotification(notification),
+                  bloc.addNotification(notification),
               child: CustomScrollView(
                 slivers: <Widget>[
                   sliverAppBar,
@@ -119,7 +108,7 @@ class _AlbumGridWidgetState extends State<AlbumGridWidget> {
               child: Padding(
                   padding: const EdgeInsets.only(bottom: 12.0, right: 8.0),
                   child: StreamBuilder<ScrollDirection>(
-                      stream: widget._bloc.scrollStream,
+                      stream: bloc.scrollStream,
                       builder: (context, snapshot) {
                         if (snapshot.data == ScrollDirection.idle)
                           return _createFAB();
@@ -138,6 +127,7 @@ class _AlbumGridWidgetState extends State<AlbumGridWidget> {
     return Stack(
       children: <Widget>[
         CardItemWidget(
+          heroTag: '${data.title}${data.id}',
           title: data.title,
           subtitle: data.artist,
           backgroundImage: data.albumArt,
@@ -172,10 +162,4 @@ class _AlbumGridWidgetState extends State<AlbumGridWidget> {
           onPressed: () {},
         ),
       );
-
-  @override
-  void dispose() {
-    widget._bloc?.dispose();
-    super.dispose();
-  }
 }

@@ -9,6 +9,10 @@ import 'package:party_player/widgets/BottomBar.dart';
 import 'package:party_player/widgets/SongListWidget.dart';
 import 'package:provider/provider.dart';
 
+import 'bloc/widgetBloc/AlbumGridWidgetBloc.dart';
+import 'bloc/widgetBloc/ArtistGridWidgetBloc.dart';
+import 'bloc/widgetBloc/SongListWidgetBloc.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -35,6 +39,8 @@ class MyApp extends StatelessWidget {
 // TODO: Isso aqui devera ir para outro arquivo
 
 class MainWidget extends StatefulWidget {
+
+  static final floatActionButtonHeroTag = 'BBFT'; // bottom bar FAB tag
 
   static const TITLES_MAP = {
     HomePageNavigation.HOME : "Home",
@@ -104,13 +110,38 @@ class _MainWidgetState extends State<MainWidget> {
               return HomeWidget();
 
             case HomePageNavigation.ARTISTS:
-              return ArtistGridWidget();
+              return Provider<ArtistGridWidgetBloc>(
+                builder: (_){
+                  var bloc = ArtistGridWidgetBloc();
+                  bloc.loadArtists();
+                  return bloc;
+                },
+                child: ArtistGridWidget(),
+                dispose: (_,bloc) => bloc.dispose(),
+              );
 
             case HomePageNavigation.ALBUMS:
-              return AlbumGridWidget();
+
+              return Provider<AlbumGridWidgetBloc>(
+                builder: (_) {
+                  var bloc = AlbumGridWidgetBloc();
+                  bloc.loadAlbums();
+                  return bloc;
+                },
+                child: AlbumGridWidget(),
+                dispose: (_, bloc ) => bloc.dispose(),
+              );
 
             case HomePageNavigation.SONGS:
-              return SongListWidget();
+              return Provider<SongListWidgetBloc>(
+                builder: (_){
+                  var bloc = SongListWidgetBloc();
+                  bloc.loadSongs();
+                  return bloc;
+                },
+                child: SongListWidget(),
+                dispose: (_, bloc) => bloc.dispose(),
+              );
           }
         }
       ),
@@ -126,6 +157,7 @@ class _MainWidgetState extends State<MainWidget> {
           child: Icon(Icons.play_circle_filled, size: 30.0,),
           backgroundColor: Colors.blueGrey[400],
           elevation: 2.0,
+          heroTag: MainWidget.floatActionButtonHeroTag,
           onPressed: (){
             Navigator.push(context,
               MaterialPageRoute(

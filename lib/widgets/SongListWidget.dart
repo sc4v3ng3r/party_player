@@ -5,24 +5,15 @@ import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:party_player/bloc/widgetBloc/SongListWidgetBloc.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
 import 'package:party_player/widgets/SongItem.dart';
+import 'package:provider/provider.dart';
 
-class SongListWidget extends StatefulWidget {
-  final SongListWidgetBloc _bloc = SongListWidgetBloc();
-
-  @override
-  _SongListWidgetState createState() => _SongListWidgetState();
-}
-
-class _SongListWidgetState extends State<SongListWidget> {
-  @override
-  void initState() {
-    widget._bloc.loadSongs();
-    super.initState();
-  }
+class SongListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
+
+    var bloc = Provider.of<SongListWidgetBloc>(context);
+
     final sliverAppBar = SliverAppBar(
       expandedHeight: 50,
       floating: true,
@@ -70,7 +61,7 @@ class _SongListWidgetState extends State<SongListWidget> {
 
 
     return StreamBuilder<List<SongInfo>>(
-      stream: widget._bloc.songStream,
+      stream: bloc.songStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData)
           return Center(
@@ -92,8 +83,7 @@ class _SongListWidgetState extends State<SongListWidget> {
         return Stack(
           children: <Widget>[
             NotificationListener<ScrollNotification>(
-              onNotification: (notification) =>
-                  widget._bloc.addNotification(notification),
+              onNotification: (notification) => bloc.addNotification(notification),
               child: CustomScrollView(
                 slivers: <Widget>[
                   sliverAppBar,
@@ -127,7 +117,7 @@ class _SongListWidgetState extends State<SongListWidget> {
                       padding:
                       const EdgeInsets.only(bottom: .0, right: 8.0),
                       child: StreamBuilder<ScrollDirection>(
-                          stream: widget._bloc.scrollStream,
+                          stream: bloc.scrollStream,
                           builder: (context, snapshot) {
                             if (snapshot.data == ScrollDirection.idle)
                               return _createFAB();
@@ -157,10 +147,4 @@ class _SongListWidgetState extends State<SongListWidget> {
           onPressed: () {},
         ),
       );
-
-  @override
-  void dispose() {
-    widget._bloc.dispose();
-    super.dispose();
-  }
 }

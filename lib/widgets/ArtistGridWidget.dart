@@ -5,36 +5,20 @@ import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:party_player/bloc/widgetBloc/ArtistGridWidgetBloc.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
+import 'package:provider/provider.dart';
 
-
-class ArtistGridWidget extends StatefulWidget {
-  final ArtistGridWidgetBloc _bloc = ArtistGridWidgetBloc();
-
-  @override
-  _ArtistGridWidgetState createState() => _ArtistGridWidgetState();
-}
-
-class _ArtistGridWidgetState extends State<ArtistGridWidget> {
-  @override
-  void initState() {
-    widget._bloc.loadArtists();
-    super.initState();
-  }
-
+class ArtistGridWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-
     Orientation orientation = MediaQuery.of(context).orientation;
-//    final width = MediaQuery.of(context).size.width;
-//    final height = MediaQuery.of(context).size.height;
 
+    ArtistGridWidgetBloc bloc = Provider.of<ArtistGridWidgetBloc>(context);
     final sliverAppBar = SliverAppBar(
       expandedHeight: 50,
       floating: true,
       elevation: 0.0,
       pinned: false,
       snap: true,
-
       title: Text("Artists",
           style: TextStyle(
               color: Colors.white,
@@ -44,7 +28,6 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
               letterSpacing: 1.0)),
       backgroundColor: Colors.blueGrey[400],
       brightness: Brightness.dark,
-
       actions: <Widget>[
         IconButton(
             icon: Icon(Icons.search),
@@ -57,7 +40,6 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
               print('search clicked');
             }),
       ],
-
       flexibleSpace: new FlexibleSpaceBar(
         background: new Stack(
           fit: StackFit.expand,
@@ -72,14 +54,16 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
     );
 
     return StreamBuilder<List<ArtistInfo>>(
-      stream: widget._bloc.artistStream,
+      stream: bloc.artistStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData)
           return Column(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Center( child: CircularProgressIndicator(),),
+              Center(
+                child: CircularProgressIndicator(),
+              ),
             ],
           );
 
@@ -92,7 +76,7 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
           children: <Widget>[
             NotificationListener<ScrollNotification>(
               onNotification: (notification) =>
-                  widget._bloc.addNotification(notification),
+                  bloc.addNotification(notification),
               child: CustomScrollView(
                 slivers: <Widget>[
                   sliverAppBar,
@@ -105,16 +89,18 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
                                   crossAxisCount: 2),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
-                              return _buildItem(snapshot.data[index], height: 250);
+                              return _buildItem(snapshot.data[index],
+                                  height: 250);
                             },
                             childCount: snapshot.data.length,
                           ))
                       : SliverGrid(
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                mainAxisSpacing: 2.0,
-                                crossAxisSpacing: 4.0,),
+                            crossAxisCount: 4,
+                            mainAxisSpacing: 2.0,
+                            crossAxisSpacing: 4.0,
+                          ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) => _buildItem(snapshot.data[index],
                                 width: 150, height: 250),
@@ -127,7 +113,7 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
               child: Padding(
                   padding: const EdgeInsets.only(bottom: 12.0, right: 8.0),
                   child: StreamBuilder<ScrollDirection>(
-                      stream: widget._bloc.scrollStream,
+                      stream: bloc.scrollStream,
                       builder: (context, snapshot) {
                         if (snapshot.data == ScrollDirection.idle)
                           return _createFAB();
@@ -141,10 +127,11 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
     );
   }
 
-  Widget _buildItem(ArtistInfo data, {double width, double height} ){
+  Widget _buildItem(ArtistInfo data, {double width, double height}) {
     return Stack(
       children: <Widget>[
         CardItemWidget(
+          heroTag: '${data.name}${data.id}',
           title: data.name,
           backgroundImage: data.artistArtPath,
           width: width,
@@ -155,8 +142,7 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
-              borderRadius:
-              BorderRadius.circular(6.0),
+              borderRadius: BorderRadius.circular(6.0),
               onTap: () {},
             ),
           ),
@@ -178,11 +164,4 @@ class _ArtistGridWidgetState extends State<ArtistGridWidget> {
           onPressed: () {},
         ),
       );
-
-  @override
-  void dispose() {
-    widget._bloc.dispose();
-    super.dispose();
-  }
 }
-

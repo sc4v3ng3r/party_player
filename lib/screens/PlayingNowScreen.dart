@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 //import 'package:musicplayer/util/artistInfo.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:party_player/bloc/ApplicationBloc.dart';
+import 'package:party_player/main.dart';
 import 'package:party_player/widgets/ChangeableButton.dart';
 import 'package:party_player/widgets/SwipeablePictureContainer.dart';
 import 'package:provider/provider.dart';
@@ -463,6 +464,7 @@ class _StateNowPlaying extends State<PlayingNowScreen>
         padding: EdgeInsets.only(left: 20.0, right: 20.0),
         child: FloatingActionButton(
           backgroundColor: _animateColor.value,
+          heroTag: MainWidget.floatActionButtonHeroTag,
           child: new AnimatedIcon(
               icon: AnimatedIcons.pause_play,
               progress: _animateIcon),
@@ -658,6 +660,7 @@ class _StateNowPlaying extends State<PlayingNowScreen>
           padding: EdgeInsets.only(left: 20.0, right: 20.0),
           child: FloatingActionButton(
             backgroundColor: _animateColor.value,
+            heroTag: MainWidget.floatActionButtonHeroTag,
             child: new AnimatedIcon(
                 icon: AnimatedIcons.pause_play,
                 progress: _animateIcon),

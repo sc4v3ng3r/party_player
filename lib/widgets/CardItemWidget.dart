@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class CardItemWidget extends StatelessWidget {
   final double width, height, elevation;
   final String backgroundImage, title, subtitle;
+  final Object heroTag;
 
   static const titleMaxLines = 2;
   static const titleTextStyle =
@@ -14,6 +15,7 @@ class CardItemWidget extends StatelessWidget {
   CardItemWidget(
       {this.width,
       this.height,
+      @required this.heroTag,
       this.backgroundImage,
       this.title='',
       this.elevation = 4.0,
@@ -22,24 +24,28 @@ class CardItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
+
     final mainContainer = Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
         color: Colors.transparent,
-
         borderRadius: BorderRadius.circular(6.0),
-        image: DecorationImage(
-          image: (backgroundImage == null)
-              ? AssetImage("images/artist.jpg")
-              : FileImage(File(backgroundImage)),
-          fit: BoxFit.cover,
-          alignment: AlignmentDirectional.center,
-        ),
       ),
+
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: <Widget>[
+          Hero(
+            tag: heroTag,
+            child: (backgroundImage) != null
+                ? Image.file(
+              File(backgroundImage), height: height, width: width,
+              fit: BoxFit.cover,
+            )
+                : Image.asset("images/artist.jpg", fit: BoxFit.cover, height: height, width: width),
+          ),
+
           Container(
             decoration: BoxDecoration(
               color: Color.fromRGBO(0xff, 0xff, 0xff, 0.5),

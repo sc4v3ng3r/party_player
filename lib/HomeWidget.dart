@@ -7,8 +7,10 @@ import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/CircularItemWidget.dart';
 import 'package:party_player/widgets/SectionTitle.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 
+import 'screens/AlbumDetailsScreen.dart';
 import 'widgets/DisplayItem.dart';
 
 class HomeWidget extends StatefulWidget {
@@ -63,6 +65,14 @@ class _HomeWidgetState extends State<HomeWidget> {
             splashColor: Colors.blueGrey[400].withOpacity(0.5),
             icon: Icon(
               Icons.info_outline,
+            ),
+            onPressed: () {}
+        ),
+
+        IconButton(
+            splashColor: Colors.blueGrey[400].withOpacity(0.5),
+            icon: Icon(
+              Icons.settings,
             ),
             onPressed: () {}
         ),
@@ -164,8 +174,10 @@ class _HomeWidgetState extends State<HomeWidget> {
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   if (snapshot.hasError) return Text('${snapshot.error}');
+
                   else return CircularProgressIndicator();
                 }
+
                 return Container(
                   height: 200.0,
                   child: ListView.builder(
@@ -175,12 +187,16 @@ class _HomeWidgetState extends State<HomeWidget> {
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index) {
+
+                        var title = snapshot.data[index].title;
+                        var heroTag = snapshot.data[index].id + title;
                         return Stack(
                           children: <Widget>[
                             CardItemWidget(
                               width: 160.0,
                               height: 190.0,
-                              title: snapshot.data[index].title,
+                              heroTag: heroTag,
+                              title: title,
                               subtitle: snapshot.data[index].artist,
                               backgroundImage: snapshot.data[index].albumArt,
                             ),
@@ -189,7 +205,25 @@ class _HomeWidgetState extends State<HomeWidget> {
                               child: Material(
                                 color: Colors.transparent,
                                 child: InkWell(
-                                  onTap: () {},
+                                  onTap: () {
+                                    print('Album clicked: ${snapshot.data[index].id}');
+                                    Navigator.push(context, MaterialPageRoute(
+                                        builder: (context){
+                                          return Provider<AlbumDetailsScreenBloc>(
+                                            builder: (_) {
+                                              var bloc = AlbumDetailsScreenBloc(
+                                                currentAlbum: snapshot.data[index],
+                                                heroTag: heroTag,
+                                              );
+                                              bloc.loadData();
+                                              return bloc;
+                                            } ,
+                                            dispose: (context, bloc) => bloc.dispose(),
+                                            child: AlbumDetailsScreen(),
+                                          );
+                                        })
+                                    );
+                                  },
                                 ),
                               ),
                             ),
@@ -205,25 +239,24 @@ class _HomeWidgetState extends State<HomeWidget> {
             SectionTitle(title: "TOP ARTISTS",),
             StreamBuilder<List<ArtistInfo>>(
               stream: _bloc.topArtistsStream,
-              builder: (context, snapshot) {
+              builder: (context, artistSnapshot) {
 
-                if (!snapshot.hasData) {
-                  if (snapshot.hasError) return Text('${snapshot.error}');
+                if (!artistSnapshot.hasData) {
+                  if (artistSnapshot.hasError) return Text('${artistSnapshot.error}');
                   else return CircularProgressIndicator();
                 }
 
                 return Container(
                   height: 180.0,
                   child: ListView.builder(
-                      //padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
                       shrinkWrap: true,
                       scrollDirection: Axis.horizontal,
-                      itemCount: snapshot.data.length,
+                      itemCount: artistSnapshot.data.length,
                       itemBuilder: (context, index) {
                         return CircularItemWidget(
-                          title: snapshot.data[index].name,
-                          tag: snapshot.data[index].id,
-                          imagePath: snapshot.data[index].artistArtPath,
+                          title: artistSnapshot.data[index].name,
+                          tag: '${artistSnapshot.data[index].name}${artistSnapshot.data[index].id}',
+                          imagePath: artistSnapshot.data[index].artistArtPath,
                         );
                       }),
                 );
@@ -252,7 +285,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                 }
 
                 if (snapshot.data.isEmpty)
-                  return Center(child: Text('There is no playlist'));
+                  return Center(child: Text('There is no genres'));
 
                 return Container(
                   height: 180.0,
@@ -304,6 +337,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                 if (snapshot.data.isEmpty)
                   return Center(child: Text('There is no playlist'));
 
+
                 return Container(
                   height: 180.0,
                   child: ListView.builder(
@@ -312,6 +346,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index) {
+                        print('PlaylistId: ${snapshot.data[index].id}');
                         return Stack(
                           children: <Widget>[
                             CircularItemWidget(
@@ -405,7 +440,9 @@ class HomeWidgetBloc extends BlocInterface {
         .catchError(addAlbumError);
   }
 
-  addAlbumToSink(final List<AlbumInfo> data) => _topAlbumsSubject.sink.add(data);
+  addAlbumToSink(final List<AlbumInfo> data) {
+    _topAlbumsSubject.sink.add(data);
+  }
   addAlbumError(final Object error) => _topAlbumsSubject.sink.addError(error);
 
 

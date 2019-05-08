@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class DisplayItem extends StatelessWidget {
@@ -11,11 +9,13 @@ class DisplayItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Center(
       child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
+
             Center(
               child: RawMaterialButton(
                 fillColor: Colors.transparent,
