@@ -59,7 +59,6 @@ class SongListWidget extends StatelessWidget {
       ),
     );
 
-
     return StreamBuilder<List<SongInfo>>(
       stream: bloc.songStream,
       builder: (context, snapshot) {

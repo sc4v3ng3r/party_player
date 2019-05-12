@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:party_player/HomeWidget.dart';
+import 'package:party_player/widgets/HomeWidget.dart';
 import 'package:party_player/bloc/ApplicationBloc.dart';
 import 'package:party_player/screens/PlayingNowScreen.dart';
 import 'package:party_player/widgets/AlbumGridWidget.dart';

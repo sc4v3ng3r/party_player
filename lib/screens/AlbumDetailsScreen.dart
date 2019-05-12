@@ -1,24 +1,24 @@
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
-import 'package:party_player/bloc/ScrollingBloc.dart';
+import 'package:party_player/bloc/screenBloc/AlbumDetailsScreenBloc.dart';
+import 'package:party_player/widgets/InfoWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
 import 'package:party_player/widgets/SongItem.dart';
 import 'package:provider/provider.dart';
-import 'package:rxdart/rxdart.dart';
 
 class AlbumDetailsScreen extends StatelessWidget {
-  static const _songsNumberStyle = const TextStyle(fontSize: 13.0);
 
   @override
   Widget build(BuildContext context) {
     AlbumDetailsScreenBloc bloc = Provider.of<AlbumDetailsScreenBloc>(context);
 
+    final expandedHeight = MediaQuery.of(context).size.width;
+
     final sliverAppBar = SliverAppBar(
-      expandedHeight: MediaQuery.of(context).size.width,
+      expandedHeight: expandedHeight,
       forceElevated: false,
       floating: false,
       pinned: false,
@@ -57,40 +57,13 @@ class AlbumDetailsScreen extends StatelessWidget {
 
     final albumSongsNumber = bloc.albumSongsNumber;
 
-    final infoRow = Row(
-      mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: <Widget>[
-        Icon(
-          Icons.person,
-          size: 40.0,
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                bloc.currentAlbum.artist,
-                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: true,
-              ),
-              (albumSongsNumber) > 1
-                  ? Text(
-                      "$albumSongsNumber Songs",
-                      style: _songsNumberStyle,
-                    )
-                  : Text(
-                      "$albumSongsNumber Song",
-                      style: _songsNumberStyle,
-                    )
-            ],
-          ),
-        ),
-      ],
+    final infoRow = InfoWidget(
+      title: bloc.currentAlbum.artist,
+      subtitle: (albumSongsNumber) > 1 ?
+      "$albumSongsNumber Songs" :
+      "$albumSongsNumber Song"
     );
+
 
     final infoSliverList = SliverList(
       delegate: SliverChildListDelegate(<Widget>[
@@ -110,7 +83,7 @@ class AlbumDetailsScreen extends StatelessWidget {
     );
 
     final songsSliverList = StreamBuilder<List<SongInfo>>(
-      stream: bloc._songsSubject,
+      stream: bloc.songsStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return SliverList(
@@ -154,25 +127,74 @@ class AlbumDetailsScreen extends StatelessWidget {
 
     return Scaffold(
       body: Container(
-        child: NotificationListener(
-          onNotification: (notification) => bloc.addNotification(notification),
-          child: CustomScrollView(
-            slivers: <Widget>[
-              sliverAppBar,
-              infoSliverList,
-              songsSliverList,
-            ],
-          ),
+        child: Stack(
+          children: <Widget>[
+            NotificationListener(
+              onNotification: (notification) =>
+                  bloc.addNotification(notification),
+              child: CustomScrollView(
+                controller: bloc.scrollController,
+                slivers: <Widget>[
+                  sliverAppBar,
+                  infoSliverList,
+                  songsSliverList,
+                ],
+              ),
+            ),
+            StreamBuilder<double>(
+                stream: bloc.scrollingOffsetStream,
+                builder: (context, snapshot) {
+                  final defaultTopMargin = expandedHeight - 4.0;
+                  //pixels from top where scaling should start
+                  final double scaleStart = 96.0;
+                  //pixels from top where scaling should end
+                  final double scaleEnd = scaleStart * 0.5;
+
+                  double top = defaultTopMargin;
+                  double scale = 1.0;
+
+                  if (snapshot.hasData) {
+                    top -= snapshot.data; // data is offset
+                    if (snapshot.data < defaultTopMargin - scaleStart) {
+                      //offset small => don't scale down
+                      scale = 1.0;
+                    } else if (snapshot.data < defaultTopMargin - scaleEnd) {
+                      //offset between scaleStart and scaleEnd => scale down
+                      scale = (defaultTopMargin - scaleEnd - snapshot.data) /
+                          scaleEnd;
+                    } else {
+                      //offset passed scaleEnd => hide fab
+                      scale = 0.0;
+                    }
+                  }
+
+                  return Positioned(
+                    top: top,
+                    right: 16.0,
+                    child: Transform(
+                      transform: Matrix4.identity()..scale(scale),
+                      child: FloatingActionButton(
+                          backgroundColor: Colors.blueGrey[400],
+                          heroTag: GlobalKey(),
+                          child: Icon(
+                            CupertinoIcons.shuffle_thick,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {}),
+                    ),
+                  );
+                }),
+          ],
         ),
       ),
-      floatingActionButton: StreamBuilder<ScrollDirection>(
-        stream: bloc.scrollStream,
-        builder: (context, snapshot) {
-          if (snapshot.data == ScrollDirection.idle) return _createFAB();
-
-          return Container();
-        },
-      ),
+//      floatingActionButton: StreamBuilder<ScrollDirection>(
+//        stream: bloc.scrollStream,
+//        builder: (context, snapshot) {
+//          if (snapshot.data == ScrollDirection.idle) return _createFAB();
+//
+//          return Container();
+//        },
+//      ),
     );
   }
 
@@ -189,35 +211,4 @@ class AlbumDetailsScreen extends StatelessWidget {
           onPressed: () {},
         ),
       );
-}
-
-class AlbumDetailsScreenBloc extends ScrollingBloc {
-  final AlbumInfo currentAlbum;
-  final FlutterAudioQuery _audioQuery = FlutterAudioQuery();
-  final Object heroTag;
-  final BehaviorSubject<List<SongInfo>> _songsSubject = BehaviorSubject();
-  Observable get songsStream => _songsSubject.stream;
-
-  AlbumDetailsScreenBloc(
-      {@required this.currentAlbum, @required this.heroTag}) {
-    print('AlbumDetailsBloc tag: $heroTag');
-  }
-
-  int get albumSongsNumber => int.parse(currentAlbum.numberOfSongs);
-
-  loadData() async {
-    _audioQuery
-        .getSongsFromAlbum(album: currentAlbum)
-        .then(_addToSink)
-        .catchError(_addError);
-  }
-
-  _addToSink(final List<SongInfo> data) => _songsSubject.sink.add(data);
-  _addError(final Object error) => _songsSubject.sink.addError(error);
-
-  @override
-  void dispose() {
-    super.dispose();
-    _songsSubject?.close();
-  }
 }

@@ -25,56 +25,54 @@ class CardItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
 
 
-    final mainContainer = Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(6.0),
-      ),
-
-      child: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
+    final mainContainer = Stack(
+      fit: StackFit.expand,
         children: <Widget>[
           Hero(
             tag: heroTag,
             child: (backgroundImage) != null
                 ? Image.file(
-              File(backgroundImage), height: height, width: width,
+              File(backgroundImage),
               fit: BoxFit.cover,
             )
-                : Image.asset("images/artist.jpg", fit: BoxFit.cover, height: height, width: width),
+                : Image.asset("images/artist.jpg", fit: BoxFit.cover, ),
           ),
 
-          Container(
-            decoration: BoxDecoration(
-              color: Color.fromRGBO(0xff, 0xff, 0xff, 0.5),
-              borderRadius: BorderRadius.only(bottomLeft: borderValue, bottomRight: borderValue)
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Flexible(
-                    child: Text(
-                    title,
-                  maxLines: titleMaxLines,
-                  textAlign: (subtitle == null) ? TextAlign.center : TextAlign.left,
-                  style: titleTextStyle,
-                )),
-                (subtitle != null) ? Flexible(child: Text(subtitle)) : Container(width: .0,height: .0,),
-              ],
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Color.fromRGBO(0xff, 0xff, 0xff, 0.5),
+                //borderRadius: BorderRadius.only(bottomLeft: borderValue, bottomRight: borderValue)
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Flexible(
+                      child: Text(
+                      title,
+                    maxLines: titleMaxLines,
+                    textAlign: (subtitle == null) ? TextAlign.center : TextAlign.left,
+                    style: titleTextStyle,
+                  )),
+                  (subtitle != null) ? Flexible(child: Text(subtitle)) : Container(width: .0,height: .0,),
+                ],
+              ),
             ),
           ),
         ],
-      ),
     );
 
-    return Card(
-      color: Colors.transparent,
-      elevation: elevation,
-      child: mainContainer,
+    return Container(
+      width: width,
+      height: height,
+      child: Card(
+        color: Colors.transparent,
+        elevation: elevation,
+        child: mainContainer,
+      ),
     );
   }
 }

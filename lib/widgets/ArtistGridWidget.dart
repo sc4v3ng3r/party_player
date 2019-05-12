@@ -2,7 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:party_player/bloc/screenBloc/ArtistDetailsScreenBloc.dart';
 import 'package:party_player/bloc/widgetBloc/ArtistGridWidgetBloc.dart';
+import 'package:party_player/screens/ArtistDetailsScreen.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
 import 'package:provider/provider.dart';
@@ -90,7 +92,7 @@ class ArtistGridWidget extends StatelessWidget {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               return _buildItem(snapshot.data[index],
-                                  height: 250);
+                                  context, bloc, height: 250);
                             },
                             childCount: snapshot.data.length,
                           ))
@@ -103,7 +105,7 @@ class ArtistGridWidget extends StatelessWidget {
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) => _buildItem(snapshot.data[index],
-                                width: 150, height: 250),
+                                context, bloc, width: 150, height: 250),
                             childCount: snapshot.data.length,
                           )),
                 ],
@@ -127,11 +129,12 @@ class ArtistGridWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(ArtistInfo data, {double width, double height}) {
+  Widget _buildItem(ArtistInfo data, BuildContext context, ArtistGridWidgetBloc bloc, {double width, double height}) {
+    var heroTag = '${data.name}${data.id}';
     return Stack(
       children: <Widget>[
         CardItemWidget(
-          heroTag: '${data.name}${data.id}',
+          heroTag: heroTag,
           title: data.name,
           backgroundImage: data.artistArtPath,
           width: width,
@@ -143,7 +146,8 @@ class ArtistGridWidget extends StatelessWidget {
             type: MaterialType.transparency,
             child: InkWell(
               borderRadius: BorderRadius.circular(6.0),
-              onTap: () {},
+              onTap: () => bloc.openArtistDetailScreenBloc(context: context,
+                  artist: data, heroTag: heroTag)
             ),
           ),
         ),

@@ -2,16 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:party_player/bloc/BlocInterface.dart';
+import 'package:party_player/screens/AlbumDetailsScreen.dart';
 import 'package:party_player/widgets/ActionButton.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/CircularItemWidget.dart';
+import 'package:party_player/widgets/DisplayItem.dart';
 import 'package:party_player/widgets/SectionTitle.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:party_player/bloc/screenBloc/AlbumDetailsScreenBloc.dart';
 
-import 'screens/AlbumDetailsScreen.dart';
-import 'widgets/DisplayItem.dart';
 
 class HomeWidget extends StatefulWidget {
   //final HomeWidgetBloc _bloc = HomeWidgetBloc();
@@ -32,7 +33,6 @@ class _HomeWidgetState extends State<HomeWidget> {
   @override
   void initState() {
     super.initState();
-
     _bloc.initData();
   }
 
@@ -209,6 +209,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                                     print('Album clicked: ${snapshot.data[index].id}');
                                     Navigator.push(context, MaterialPageRoute(
                                         builder: (context){
+                                          //TODO: vai para o bloc
                                           return Provider<AlbumDetailsScreenBloc>(
                                             builder: (_) {
                                               var bloc = AlbumDetailsScreenBloc(
@@ -337,7 +338,6 @@ class _HomeWidgetState extends State<HomeWidget> {
                 if (snapshot.data.isEmpty)
                   return Center(child: Text('There is no playlist'));
 
-
                 return Container(
                   height: 180.0,
                   child: ListView.builder(
@@ -346,7 +346,6 @@ class _HomeWidgetState extends State<HomeWidget> {
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index) {
-                        print('PlaylistId: ${snapshot.data[index].id}');
                         return Stack(
                           children: <Widget>[
                             CircularItemWidget(

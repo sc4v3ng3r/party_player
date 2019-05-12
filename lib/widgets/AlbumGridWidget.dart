@@ -84,7 +84,7 @@ class AlbumGridWidget extends StatelessWidget {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               return _buildItem(snapshot.data[index],
-                                  height: 250);
+                                  context, bloc, height: 250);
                             },
                             childCount: snapshot.data.length,
                           ))
@@ -96,7 +96,7 @@ class AlbumGridWidget extends StatelessWidget {
                                 crossAxisSpacing: 4.0,),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) => _buildItem(snapshot.data[index],
-                                width: 150, height: 250),
+                                context, bloc, width: 150, height: 250),
                             childCount: snapshot.data.length,
                           )),
                 ],
@@ -123,7 +123,8 @@ class AlbumGridWidget extends StatelessWidget {
   }
 
   /// Method to create gridView items
-  Widget _buildItem(AlbumInfo data, {double width, double height}) {
+  Widget _buildItem(AlbumInfo data, BuildContext context,  AlbumGridWidgetBloc bloc,
+      {double width, double height}) {
     return Stack(
       children: <Widget>[
         CardItemWidget(
@@ -140,7 +141,7 @@ class AlbumGridWidget extends StatelessWidget {
             type: MaterialType.transparency,
             child: InkWell(
               borderRadius: BorderRadius.circular(6.0),
-              onTap: () {},
+              onTap: () => bloc.openAlbumDetailsScreen(data, context)
             ),
           ),
         ),
