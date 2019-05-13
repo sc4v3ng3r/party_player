@@ -10,7 +10,6 @@ import 'package:party_player/widgets/SongItem.dart';
 import 'package:provider/provider.dart';
 
 class AlbumDetailsScreen extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     AlbumDetailsScreenBloc bloc = Provider.of<AlbumDetailsScreenBloc>(context);
@@ -58,12 +57,10 @@ class AlbumDetailsScreen extends StatelessWidget {
     final albumSongsNumber = bloc.albumSongsNumber;
 
     final infoRow = InfoWidget(
-      title: bloc.currentAlbum.artist,
-      subtitle: (albumSongsNumber) > 1 ?
-      "$albumSongsNumber Songs" :
-      "$albumSongsNumber Song"
-    );
-
+        title: bloc.currentAlbum.artist,
+        subtitle: (albumSongsNumber) > 1
+            ? "$albumSongsNumber Songs"
+            : "$albumSongsNumber Song");
 
     final infoSliverList = SliverList(
       delegate: SliverChildListDelegate(<Widget>[
@@ -187,28 +184,6 @@ class AlbumDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
-//      floatingActionButton: StreamBuilder<ScrollDirection>(
-//        stream: bloc.scrollStream,
-//        builder: (context, snapshot) {
-//          if (snapshot.data == ScrollDirection.idle) return _createFAB();
-//
-//          return Container();
-//        },
-//      ),
     );
   }
-
-  Widget _createFAB() => AnimatedOpacity(
-        opacity: 1.0,
-        duration: Duration(seconds: 1),
-        child: FloatingActionButton(
-          backgroundColor: Colors.blueGrey[400],
-          heroTag: GlobalKey(),
-          child: Icon(
-            CupertinoIcons.shuffle_thick,
-            color: Colors.white,
-          ),
-          onPressed: () {},
-        ),
-      );
 }

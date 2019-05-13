@@ -100,6 +100,7 @@ class SongListWidget extends StatelessWidget {
                         songArtist: snapshot.data[index].artist,
                         image: snapshot.data[index].albumArtwork,
                         duration: int.parse(snapshot.data[index].duration),
+                        optionPress: () => bloc.showSongBottomSheet(context,  snapshot.data[index]),
                       );
                     }, childCount: snapshot.data.length+1),
                   ),
@@ -132,6 +133,7 @@ class SongListWidget extends StatelessWidget {
       },
     );
   }
+
 
   Widget _createFAB() => AnimatedOpacity(
         opacity: 1.0,

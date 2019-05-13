@@ -2,15 +2,18 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+typedef onOptionPress = void Function();
+
 class SongItem extends StatelessWidget {
 
   final String image, songTitle, songArtist;
   final int duration;
   final Object tag;
+  final onOptionPress optionPress;
   static final imageSize = 55.0;
   
   SongItem({this.image, @required this.songTitle, @required this.songArtist,
-    @required this.duration, @required this.tag});
+    @required this.duration, @required this.tag, this.optionPress});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +38,9 @@ class SongItem extends StatelessWidget {
 
       trailing: IconButton(
           icon: Icon(Icons.more_vert, color: Colors.black,),
-          onPressed: (){ print('more pressed');
+          onPressed: (){
+            if (optionPress != null)
+              optionPress();
           }
       ),
 
