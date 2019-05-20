@@ -10,4 +10,6 @@ class MainActivity: FlutterActivity() {
     super.onCreate(savedInstanceState)
     GeneratedPluginRegistrant.registerWith(this)
   }
+
+
 }

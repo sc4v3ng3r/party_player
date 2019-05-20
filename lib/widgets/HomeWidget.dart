@@ -1,16 +1,17 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:party_player/bloc/BlocInterface.dart';
+import 'package:party_player/bloc/ApplicationBloc.dart';
+import 'package:party_player/bloc/PlaybackService.dart';
+import 'package:party_player/bloc/widgetBloc/HomeWidgetBloc.dart';
 import 'package:party_player/screens/AlbumDetailsScreen.dart';
 import 'package:party_player/widgets/ActionButton.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/CircularItemWidget.dart';
-import 'package:party_player/widgets/DisplayItem.dart';
+import 'package:party_player/widgets/RecentSongItem.dart';
 import 'package:party_player/widgets/SectionTitle.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:provider/provider.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:party_player/bloc/screenBloc/AlbumDetailsScreenBloc.dart';
 
 
@@ -22,25 +23,26 @@ class HomeWidget extends StatefulWidget {
 }
 
 class _HomeWidgetState extends State<HomeWidget> {
-  final FlutterAudioQuery audioQuery = FlutterAudioQuery();
-  final HomeWidgetBloc _bloc = HomeWidgetBloc();
 
-  static final Widget _leading = Padding(
-    child: Image.asset("images/icon.png",),
-    padding: EdgeInsets.all(10.0),
-  );
+  HomeWidgetBloc _bloc;
+  PlaybackService _playbackService;
 
   @override
   void initState() {
     super.initState();
-    _bloc.initData();
   }
 
 
   @override
-  Widget build(BuildContext context) {
-    final Orientation orientation = MediaQuery.of(context).orientation;
+  void didChangeDependencies() {
+    _playbackService ??= Provider.of<ApplicationBloc>(context).playbackService;
+    _bloc ??= Provider.of<HomeWidgetBloc>(context);
+    super.didChangeDependencies();
 
+  }
+  @override
+  Widget build(BuildContext context) {
+    //final Orientation orientation = MediaQuery.of(context).orientation;
 
     final sliverAppBar = SliverAppBar(
       expandedHeight: 200.0,
@@ -58,7 +60,10 @@ class _HomeWidgetState extends State<HomeWidget> {
               letterSpacing: 1.0)),
       backgroundColor: Colors.blueGrey[400],
       brightness: Brightness.dark,
-      leading: _leading,
+      leading:  Padding(
+        child: Image.asset("images/icon.png",),
+        padding: EdgeInsets.all(10.0),
+      ),
 
       actions: <Widget>[
         IconButton(
@@ -82,9 +87,19 @@ class _HomeWidgetState extends State<HomeWidget> {
         background: new Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            new Image.asset(
-              "images/music.jpg",
-              fit: BoxFit.fitWidth,
+
+            StreamBuilder<SongInfo>(
+              initialData: _playbackService.currentSong,
+              stream: _playbackService.songReadyStream,
+              builder: (context, snapshot){
+                if ( (snapshot.hasData) && (snapshot.data?.albumArtwork != null))
+                  return Image.file(File(snapshot.data.albumArtwork), fit: BoxFit.fitWidth,);
+
+                return Image.asset(
+                    "images/music.jpg",
+                    fit: BoxFit.fitWidth,
+                  );
+              },
             ),
           ],
         ),
@@ -94,18 +109,26 @@ class _HomeWidgetState extends State<HomeWidget> {
     final playingNowArtistTitle = Padding(
       padding: EdgeInsets.only(left: 15.0, top: 15.0, bottom: 10.0),
       child: Center(
-        child: Text(
-          'Artist Name',
-          style: TextStyle(
-              color: Colors.blueGrey[900],
-              fontSize: 14.0,
-              fontFamily: "Quicksand",
-              fontStyle: FontStyle.normal,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 1.5),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: true,
+        child: StreamBuilder<SongInfo>(
+          initialData: _playbackService.currentSong,
+          stream: _playbackService.songReadyStream,
+          builder: (context, snapshot){
+            return Text(
+
+              (snapshot.data == null) ? 'PartyPlayer' :'${snapshot.data.artist} - ${snapshot.data.title}' ,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Colors.blueGrey[900],
+                  fontSize: 14.0,
+                  fontFamily: "Quicksand",
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.5),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              softWrap: true,
+            );
+          },
         ),
       ),
     );
@@ -152,18 +175,62 @@ class _HomeWidgetState extends State<HomeWidget> {
             playingNowArtistTitle,
             quickActionsTitle,
             quickActionsRow, // quick action ACTIONS
+
             //Recents artists
             /// TODO quando ainda nao houver recentes, nao mostrar essa widget
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle( title: "YOUR RECENTS!", ),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(Icons.music_note),
-                Text('Explore you music'),
-              ],
-            ), //recentW(),
+
+            StreamBuilder<List<SongInfo>>(
+              stream: _bloc.recentSongsStream,
+              builder: (context, snapshot){
+                if (!snapshot.hasData){
+                  if (snapshot.hasError) return Text('${snapshot.error}');
+                  else return Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.data.isEmpty)
+                  return Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.music_note),
+                      Text('Explore you music'),
+                    ],
+                  );
+
+                return Container(
+                  height: 120,
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, index){
+                        return Stack(
+                          children: <Widget>[
+                            RecentSongItem(
+                              title: snapshot.data[index].title,
+                              width: 100,
+                              height: 135,
+                            ),
+                            Positioned.fill(
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: (){},
+                                  ),
+                                ),
+                            ),
+                          ],
+                        );
+                      }
+                  ),
+                );
+
+              },
+            ),
+             //recentW(),
 
             //Top Albums
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
@@ -175,15 +242,14 @@ class _HomeWidgetState extends State<HomeWidget> {
                 if (!snapshot.hasData) {
                   if (snapshot.hasError) return Text('${snapshot.error}');
 
-                  else return CircularProgressIndicator();
+                  else return Center(child: CircularProgressIndicator());
                 }
 
                 return Container(
                   height: 200.0,
                   child: ListView.builder(
                       shrinkWrap: true,
-                      padding:
-                          EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
+                      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index) {
@@ -192,6 +258,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                         var heroTag = snapshot.data[index].id + title;
                         return Stack(
                           children: <Widget>[
+
                             CardItemWidget(
                               width: 160.0,
                               height: 190.0,
@@ -243,12 +310,13 @@ class _HomeWidgetState extends State<HomeWidget> {
               builder: (context, artistSnapshot) {
 
                 if (!artistSnapshot.hasData) {
-                  if (artistSnapshot.hasError) return Text('${artistSnapshot.error}');
-                  else return CircularProgressIndicator();
+                  if (artistSnapshot.hasError)
+                    return Text('${artistSnapshot.error}');
+                  else return Center(child: CircularProgressIndicator());
                 }
 
                 return Container(
-                  height: 180.0,
+                  height: 200.0,
                   child: ListView.builder(
                       shrinkWrap: true,
                       scrollDirection: Axis.horizontal,
@@ -270,50 +338,41 @@ class _HomeWidgetState extends State<HomeWidget> {
             SectionTitle(
               title: "YOUR FAVOURITES",
             ),
-            Text('FAVOURITES body'), //topArtists(),
 
-            Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
-            SectionTitle( title: "GENRES",),
-//            Text('Genres available'),
-
-            StreamBuilder<List<GenreInfo>>(
-              stream: _bloc.genresStream,
+            StreamBuilder< List<SongInfo> >(
+              stream: _bloc.favouritesSongStream,
               builder: (context, snapshot){
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData){
                   if (snapshot.hasError)
-                    return Text('${snapshot.error}');
-                  else return CircularProgressIndicator();
+                    return Center(child: Text('${snapshot.error}'),);
+                  return Center(child: CircularProgressIndicator(),);
                 }
 
                 if (snapshot.data.isEmpty)
-                  return Center(child: Text('There is no genres'));
+                  return Text('FAVOURITES body');
 
                 return Container(
-                  height: 180.0,
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      mainAxisSpacing: 4.0,
-                      crossAxisSpacing: 8.0,
-                      childAspectRatio: .8,
-                      crossAxisCount: 2,
-                    ),
+                  height: 120,
+                  child: ListView.builder(
                       shrinkWrap: true,
+                      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index){
                         return Stack(
                           children: <Widget>[
-                            DisplayItem(
-                              title: snapshot.data[index].name,
+                            RecentSongItem(
+                              title: snapshot.data[index].title,
+                              width: 100,
+                              height: 135,
                             ),
-
                             Positioned.fill(
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: (){},
-                                  ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: (){},
                                 ),
+                              ),
                             ),
                           ],
                         );
@@ -322,6 +381,58 @@ class _HomeWidgetState extends State<HomeWidget> {
                 );
               },
             ),
+
+
+//            Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
+//            SectionTitle( title: "GENRES",),
+////            Text('Genres available'),
+//
+//            StreamBuilder<List<GenreInfo>>(
+//              stream: _bloc.genresStream,
+//              builder: (context, snapshot){
+//                if (!snapshot.hasData) {
+//                  if (snapshot.hasError)
+//                    return Text('${snapshot.error}');
+//                  else return CircularProgressIndicator();
+//                }
+//
+//                if (snapshot.data.isEmpty)
+//                  return Center(child: Text('There is no genres'));
+//
+//                return Container(
+//                  height: 180.0,
+//                  child: GridView.builder(
+//                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+//                      mainAxisSpacing: 4.0,
+//                      crossAxisSpacing: 8.0,
+//                      childAspectRatio: .8,
+//                      crossAxisCount: 2,
+//                    ),
+//                      shrinkWrap: true,
+//                      scrollDirection: Axis.horizontal,
+//                      itemCount: snapshot.data.length,
+//                      itemBuilder: (context, index){
+//                        return Stack(
+//                          children: <Widget>[
+//                            DisplayItem(
+//                              title: snapshot.data[index].name,
+//                            ),
+//
+//                            Positioned.fill(
+//                                child: Material(
+//                                  color: Colors.transparent,
+//                                  child: InkWell(
+//                                    onTap: (){},
+//                                  ),
+//                                ),
+//                            ),
+//                          ],
+//                        );
+//                      }
+//                  ),
+//                );
+//              },
+//            ),
 
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle( title: "YOUR PLAYLISTS",),
@@ -339,7 +450,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                   return Center(child: Text('There is no playlist'));
 
                 return Container(
-                  height: 180.0,
+                  height: 200.0,
                   child: ListView.builder(
                       shrinkWrap: true,
                       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
@@ -381,105 +492,6 @@ class _HomeWidgetState extends State<HomeWidget> {
   }
 }
 
-class HomeWidgetBloc extends BlocInterface {
-
-  final FlutterAudioQuery audioQuery = FlutterAudioQuery();
-
-  final BehaviorSubject< List<AlbumInfo> > _topAlbumsSubject = BehaviorSubject();
-  Observable<List<AlbumInfo>> get topAlbumsStream => _topAlbumsSubject.stream;
-
-  final BehaviorSubject<List<ArtistInfo>> _topArtistSubject = BehaviorSubject();
-  Observable<List<ArtistInfo>> get topArtistsStream => _topArtistSubject.stream;
-
-  final BehaviorSubject<List<PlaylistInfo>> _playlistSubject = BehaviorSubject();
-  Observable< List<PlaylistInfo> > get playlistStream => _playlistSubject.stream;
-
-  final BehaviorSubject<List<GenreInfo>> _genreSubject = BehaviorSubject();
-  Observable<List<GenreInfo>> get genresStream => _genreSubject.stream;
-
-  void loadTopArtists({ArtistSortType sortType = ArtistSortType.DEFAULT}) {
-
-//    addArtistToSink(null);
-
-    audioQuery
-        .getArtists(sortType: ArtistSortType.MORE_ALBUMS_NUMBER_FIRST)
-        .then(addArtistToSink)
-        .catchError(addArtistError);
-  }
-
-  void initData() async {
-    try {
-      List<AlbumInfo> topAlbums = await audioQuery.getAlbums(sortType: AlbumSortType.MOST_RECENT_YEAR);
-      if (topAlbums != null){
-        addAlbumToSink(topAlbums);
-        loadTopArtists();
-        loadPlaylists(sortType: PlaylistSortType.NEWEST_FIRST);
-        loadGenres();
-      }
-    }
-
-    on PlatformException catch(ex){
-      addArtistError(ex.code);
-      addAlbumError(ex.code);
-      addPlaylistError(ex.code);
-    }
-
-  }
-
-  addArtistToSink(final List<ArtistInfo> data) => _topArtistSubject.sink.add(data);
-  addArtistError(final Object error) => _topArtistSubject.sink.addError(error);
-
-  loadAlbums({final AlbumSortType sortType = AlbumSortType.DEFAULT}) {
-
-//    addAlbumToSink(null);
-
-    audioQuery
-        .getAlbums()
-        .then(addAlbumToSink)
-        .catchError(addAlbumError);
-  }
-
-  addAlbumToSink(final List<AlbumInfo> data) {
-    _topAlbumsSubject.sink.add(data);
-  }
-  addAlbumError(final Object error) => _topAlbumsSubject.sink.addError(error);
-
-
-  loadPlaylists( {PlaylistSortType sortType = PlaylistSortType.DEFAULT} ){
-//    addPlaylistSink(null);
-
-    audioQuery.getPlaylists()
-        .then( addPlaylistSink )
-        .catchError( addPlaylistError );
-  }
-
-  addPlaylistSink(final List<PlaylistInfo> data) => _playlistSubject.sink.add(data);
-  addPlaylistError( final Object error ) => _playlistSubject.sink.addError(error);
-
-
-  loadGenres() async {
-//    addGenreError(null);
-    List<GenreInfo> genres = await audioQuery.getGenres();
-    genres.forEach( (genre) {
-
-    } );
-    audioQuery.getGenres()
-        .then( addGenreToSink )
-        .catchError( addGenreError );
-  }
-
-  addGenreToSink(final List<GenreInfo> data) => _genreSubject.sink.add(data);
-  addGenreError( final Object error ) => _genreSubject.sink.addError( error );
-
-  @override
-  void dispose() {
-    _topArtistSubject?.close();
-    _topAlbumsSubject?.close();
-    _genreSubject?.close();
-    _playlistSubject?.close();
-  }
-
-}
 
 /*
 

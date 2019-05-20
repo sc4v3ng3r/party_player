@@ -29,18 +29,23 @@ class PlaybackService with BlocInterface {
   final BehaviorSubject<SongInfo> _currentSongSubject = BehaviorSubject();
   Observable<SongInfo> get songReadyStream => _currentSongSubject.stream;
 
+  // playing now screen bloc
   final BehaviorSubject<bool> _favoriteSubject = BehaviorSubject();
   Observable<bool> get favoriteStream => _favoriteSubject.stream;
   
   final BehaviorSubject<Map<String,String>> _favouritesSongsSubject = BehaviorSubject();
   Observable< Map<String,String> > get favouritesSongsStream => _favouritesSongsSubject.stream;
   
+  final BehaviorSubject<List<String>> _recentSongsIdSubject = BehaviorSubject();
+  Observable<List<String>> get recentSongsIdStream => _recentSongsIdSubject.stream;
+
   /// song queue
   List<SongInfo> _queue = [];
   final Random _indexGenerator = Random();
 
   Map<String,String> _favoriteSongsIds;
-
+  List<String> _recentSongsIds;
+  
   SongInfo _currentSong;
   SongInfo get currentSong => _currentSong;
   int _currentQueuePosition = 0;
@@ -56,7 +61,6 @@ class PlaybackService with BlocInterface {
    _audioPlayer.onPlayerStateChanged.listen( _playerStateListener );
     AudioPlayer.logEnabled = false;
   }
-  
 
   _addToQueueSink( final List<SongInfo> queue ) => _queueSubject.sink.add( queue );
   _addToPositionSink ( final Duration position ) => _positionSubject.sink.add( position );
@@ -64,10 +68,27 @@ class PlaybackService with BlocInterface {
   _addToCurrentSongSink( final SongInfo song ) => _currentSongSubject.sink.add(song);
   _addToFavoriteStream (final bool favorite) => _favoriteSubject.sink.add(favorite);
 
-  updateToFavoriteSongs( final Map<String, String> favoritesSongsIds ) {
-    print('Loaded ${favoritesSongsIds.values}' );
+  updateFavoriteSongs( final Map<String, String> favoritesSongsIds ) {
     _favoriteSongsIds = favoritesSongsIds;
     _favouritesSongsSubject.sink.add(_favoriteSongsIds);
+  }
+  
+  updateRecentSongs(final List<String> recentSongs){
+    _recentSongsIds = recentSongs;
+    _recentSongsIdSubject.sink.add( _recentSongsIds );
+  }
+  
+  addToRecentSongs(final String id){
+    RecentSongDAO.insertRecentSong(
+        RecentSong(
+            songId: int.parse(id),
+            time: DateTime.now().millisecondsSinceEpoch
+        ));
+    if (_recentSongsIds.contains( id) )
+      _recentSongsIds.remove(id);
+
+    _recentSongsIds.insert(0, id);
+    updateRecentSongs(_recentSongsIds);
   }
   
   _playerStateListener(AudioPlayerState state){
@@ -82,13 +103,8 @@ class PlaybackService with BlocInterface {
         break;
         
       case AudioPlayerState.COMPLETED:
-
-        /// TODO add statistics
-        RecentSongDAO.insertRecentSong(
-            RecentSong(
-                songId: int.parse(_currentSong.id),
-                time: DateTime.now().millisecondsSinceEpoch
-            ));
+        print('adding to recent ${_currentSong.title } - id: ${_currentSong.id}');
+        addToRecentSongs( _currentSong.id );
 
         if (repeat)
           playAt(_currentQueuePosition);
@@ -121,7 +137,6 @@ class PlaybackService with BlocInterface {
     _addToQueueSink(_queue);
   }
 
-  
   bool _isFavoriteSong(final SongInfo song) => _favoriteSongsIds.containsKey(song.id);
   
   setFavorite(SongInfo song, bool status) {
@@ -130,7 +145,7 @@ class PlaybackService with BlocInterface {
       if (! _isFavoriteSong(song)) {
         FavoriteSongDAO.addToFavorite(song);
         _favoriteSongsIds.putIfAbsent( song.id, () => song.id);
-        updateToFavoriteSongs(_favoriteSongsIds);
+        updateFavoriteSongs(_favoriteSongsIds);
         _addToFavoriteStream(status);
       }
     }
@@ -139,7 +154,7 @@ class PlaybackService with BlocInterface {
       if ( _isFavoriteSong(song) ){
         FavoriteSongDAO.removeFromFavourites(song);
         _favoriteSongsIds.remove( song.id );
-        updateToFavoriteSongs(_favoriteSongsIds);
+        updateFavoriteSongs(_favoriteSongsIds);
         _addToFavoriteStream(status);
       }
     }
@@ -205,7 +220,6 @@ class PlaybackService with BlocInterface {
     if (_currentState != AudioPlayerState.STOPPED )
       await _audioPlayer.stop();
 
-
     _audioPlayer.play(song.filePath, isLocal: true).then(
             (status) {
               //print('PLAY STATUS $status');
@@ -266,5 +280,6 @@ class PlaybackService with BlocInterface {
     _currentSongSubject?.close();
     _favoriteSubject?.close();
     _favouritesSongsSubject?.close();
+    _recentSongsIdSubject?.close();
   }
 }

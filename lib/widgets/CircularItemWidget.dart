@@ -16,6 +16,7 @@ class CircularItemWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
+
                 Hero(
                   tag: this.tag,
                   child: Material(

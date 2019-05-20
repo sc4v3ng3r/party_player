@@ -2,9 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:party_player/bloc/ApplicationBloc.dart';
+import 'package:party_player/bloc/PlaybackService.dart';
 import 'package:party_player/bloc/widgetBloc/SongListWidgetBloc.dart';
+import 'package:party_player/widgets/ActionButton.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
 import 'package:party_player/widgets/SongItem.dart';
+import 'package:party_player/widgets/bottomsheet/SongBottomSheet.dart';
 import 'package:provider/provider.dart';
 
 class SongListWidget extends StatelessWidget {
@@ -13,6 +17,7 @@ class SongListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
 
     var bloc = Provider.of<SongListWidgetBloc>(context);
+    var playbackBloc = Provider.of<ApplicationBloc>(context).playbackService;
 
     final sliverAppBar = SliverAppBar(
       expandedHeight: 50,
@@ -100,7 +105,8 @@ class SongListWidget extends StatelessWidget {
                         songArtist: snapshot.data[index].artist,
                         image: snapshot.data[index].albumArtwork,
                         duration: int.parse(snapshot.data[index].duration),
-                        optionPress: () => bloc.showSongBottomSheet(context,  snapshot.data[index]),
+                        optionPress: () => showSongBottomSheet(context,  snapshot.data[index], playbackBloc),
+                        onTap: () => playbackBloc.playThisSong(snapshot.data[index])
                       );
                     }, childCount: snapshot.data.length+1),
                   ),
@@ -148,4 +154,41 @@ class SongListWidget extends StatelessWidget {
           onPressed: () {},
         ),
       );
+
+
+  showSongBottomSheet(BuildContext context, SongInfo song, PlaybackService playback){
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SongBottomSheet(song: song,
+        actions: [
+          ActionButton(
+            iconData: Icons.skip_next,
+            title: 'Play next',
+            onTap: (){
+              playback.next();
+              Navigator.pop(context);
+             },
+          ),
+
+          ActionButton(
+            iconData: Icons.playlist_add,
+            title: 'Add to',
+            onTap: (){
+              Navigator.pop(context);
+            },
+          ),
+
+          ActionButton(
+            iconData: Icons.add_to_queue,
+            title: 'Enqueue',
+            onTap: (){
+              playback.addToQueue(song);
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
 }

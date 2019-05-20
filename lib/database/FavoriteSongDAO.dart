@@ -7,18 +7,16 @@ class FavoriteSongDAO {
   static addToFavorite( final SongInfo song ) async {
     var db = await DataBaseProvider.instance.database;
     print("is open ${db.isOpen}");
-    db.insert(DataBaseProvider.TABLE_FAVOURITES, 
-      {
-        FavoriteSong.SONG_ID : song.id
-      }
+
+    db.insert(DataBaseProvider.TABLE_FAVOURITES, {FavoriteSong.SONG_ID : song.id}
     ).then( (value){ print('added to favourites ${song.id} operation id: $value');} )
       .catchError( (error) => print('error on add to favourites $error') );
   }
 
   static removeFromFavourites( final SongInfo song ) async {
     var db = await DataBaseProvider.instance.database;
-
     print("is open ${db.isOpen}");
+
     db.delete(DataBaseProvider.TABLE_FAVOURITES,
       where: "${FavoriteSong.SONG_ID} = ?", whereArgs: [song.id])
         .then( (value){ print('removed from favourites ${song.id} operation id: $value'); } )
@@ -31,6 +29,14 @@ class FavoriteSongDAO {
 
     List<FavoriteSong> ids =  data.isNotEmpty ? data.map( (map) =>  FavoriteSong.fromJson(map) ).toList() : [];
     return ids;
+  }
+
+  static clearData() async {
+    var db = await DataBaseProvider.instance.database;
+
+    db.rawDelete('DELETE FROM ${DataBaseProvider.TABLE_FAVOURITES}')
+        .then( (id) => print('FavoriteSongDAO clear success $id'))
+        .catchError( (error) => print('FavoriteSongDAO clear error $error') );
   }
 
 }

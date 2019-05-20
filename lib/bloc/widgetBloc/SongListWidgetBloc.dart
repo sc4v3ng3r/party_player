@@ -29,14 +29,6 @@ class SongListWidgetBloc extends ScrollingBloc {
   addToSink(final List<SongInfo> data) => _songStreamController.sink.add(data);
   addError(final Object error) => _songStreamController.sink.addError(error);
 
-
-  showSongBottomSheet(BuildContext context, SongInfo song){
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SongBottomSheet(song),
-    );
-  }
-
   @override
   void dispose() {
     _songStreamController?.close();

@@ -3,17 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 typedef onOptionPress = void Function();
-
+typedef _onTap = void Function();
 class SongItem extends StatelessWidget {
 
   final String image, songTitle, songArtist;
   final int duration;
   final Object tag;
   final onOptionPress optionPress;
+  final _onTap onTap;
   static final imageSize = 55.0;
   
   SongItem({this.image, @required this.songTitle, @required this.songArtist,
-    @required this.duration, @required this.tag, this.optionPress});
+    @required this.duration, @required this.tag, this.optionPress, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +53,8 @@ class SongItem extends StatelessWidget {
 //              fontSize: 12.0, color: Colors.black54)),
 
       onTap: () {
+        if (onTap != null)
+            onTap();
 //        MyQueue.songs = songs;
 //        Navigator.of(context).push(new MaterialPageRoute(
 //            builder: (context) => new NowPlaying(widget.db, MyQueue.songs, i, 0)));

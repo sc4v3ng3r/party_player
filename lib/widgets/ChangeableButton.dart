@@ -32,6 +32,7 @@ class _ChangeableIconButtonState extends State<ChangeableIconButton> {
   @override
   Widget build(BuildContext context) {
     return IconButton(
+      padding: EdgeInsets.all(.0),
       tooltip: widget.tooltip,
       icon: (_status == ButtonStatus.PRIMARY) ? widget.primaryIcon :
         widget.secondaryIcon,
