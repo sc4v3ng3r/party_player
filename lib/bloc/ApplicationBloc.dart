@@ -1,13 +1,9 @@
-import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:party_player/bloc/BlocInterface.dart';
 import 'package:party_player/bloc/PlaybackService.dart';
 import 'package:party_player/database/DatabaseProvider.dart';
 import 'package:party_player/model/FavoriteSong.dart';
 import 'package:party_player/model/RecentSong.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:party_player/database/TopSongDAO.dart';
-import 'package:party_player/database/TopAlbumDAO.dart';
-import 'package:party_player/database/TopArtistDAO.dart';
 import 'package:party_player/database/FavoriteSongDAO.dart';
 import 'package:party_player/database/RecentSongDAO.dart';
 

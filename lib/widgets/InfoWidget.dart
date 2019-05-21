@@ -31,6 +31,9 @@ class InfoWidget extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                   style: _subtitleStyle,
                 )
               ],

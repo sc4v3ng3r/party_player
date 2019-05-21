@@ -165,7 +165,7 @@ class SongListWidget extends StatelessWidget {
             iconData: Icons.skip_next,
             title: 'Play next',
             onTap: (){
-              playback.next();
+              playback.addToPlayNext(song);
               Navigator.pop(context);
              },
           ),

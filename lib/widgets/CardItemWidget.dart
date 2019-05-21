@@ -5,7 +5,7 @@ class CardItemWidget extends StatelessWidget {
   final double width, height, elevation;
   final String backgroundImage, title, subtitle;
   final Object heroTag;
-
+  final Color stripeColor;
   static const titleMaxLines = 2;
   static const titleTextStyle =
       TextStyle(fontWeight: FontWeight.w500, fontSize: 16.0);
@@ -15,6 +15,7 @@ class CardItemWidget extends StatelessWidget {
   CardItemWidget(
       {this.width,
       this.height,
+      this.stripeColor = const Color.fromRGBO(0xff, 0xff, 0xff, 0.5),
       @required this.heroTag,
       this.backgroundImage,
       this.title='',
@@ -34,15 +35,14 @@ class CardItemWidget extends StatelessWidget {
                 ? Image.file(
               File(backgroundImage),
               fit: BoxFit.cover,
-            )
-                : Image.asset("images/artist.jpg", fit: BoxFit.cover, ),
+            ) : Image.asset("images/artist.jpg", fit: BoxFit.cover, ),
           ),
 
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
               decoration: BoxDecoration(
-                color: Color.fromRGBO(0xff, 0xff, 0xff, 0.5),
+                color: stripeColor,
                 //borderRadius: BorderRadius.only(bottomLeft: borderValue, bottomRight: borderValue)
               ),
               padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
@@ -53,6 +53,7 @@ class CardItemWidget extends StatelessWidget {
                   Flexible(
                       child: Text(
                       title,
+                    overflow: TextOverflow.ellipsis,
                     maxLines: titleMaxLines,
                     textAlign: (subtitle == null) ? TextAlign.center : TextAlign.left,
                     style: titleTextStyle,

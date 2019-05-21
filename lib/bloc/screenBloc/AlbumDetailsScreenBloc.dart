@@ -5,11 +5,14 @@ import 'package:rxdart/rxdart.dart';
 
 class AlbumDetailsScreenBloc extends ScrollingBloc {
   final AlbumInfo currentAlbum;
+  List<SongInfo> currentAlbumSongs;
 
   final FlutterAudioQuery _audioQuery = FlutterAudioQuery();
   final Object heroTag;
+
   final BehaviorSubject<List<SongInfo>> _songsSubject = BehaviorSubject();
   Observable<List<SongInfo>> get songsStream => _songsSubject.stream;
+
   final BehaviorSubject<Color> _colorSubject = BehaviorSubject();
   Observable<Color> get colorStream => _colorSubject.stream;
 
@@ -20,12 +23,16 @@ class AlbumDetailsScreenBloc extends ScrollingBloc {
 
   loadData() async {
     _audioQuery
-        .getSongsFromAlbum(album: currentAlbum)
+        .getSongsFromAlbum(album: currentAlbum, sortType: SongSortType.DISPLAY_NAME)
         .then(_addToSink)
         .catchError(_addError);
   }
 
-  _addToSink(final List<SongInfo> data) => _songsSubject.sink.add(data);
+  _addToSink(final List<SongInfo> data) {
+    _songsSubject.sink.add(data);
+    currentAlbumSongs = data;
+  }
+
   _addError(final Object error) => _songsSubject.sink.addError(error);
 
   @override

@@ -29,10 +29,14 @@ class PlaybackService with BlocInterface {
   final BehaviorSubject<SongInfo> _currentSongSubject = BehaviorSubject();
   Observable<SongInfo> get songReadyStream => _currentSongSubject.stream;
 
-  // playing now screen bloc
+  // favourite on/off
   final BehaviorSubject<bool> _favoriteSubject = BehaviorSubject();
   Observable<bool> get favoriteStream => _favoriteSubject.stream;
-  
+
+  // shuffle on/off
+  final BehaviorSubject<bool> _shuffleSubject = BehaviorSubject();
+  Observable<bool> get shuffleStream => _shuffleSubject.stream;
+
   final BehaviorSubject<Map<String,String>> _favouritesSongsSubject = BehaviorSubject();
   Observable< Map<String,String> > get favouritesSongsStream => _favouritesSongsSubject.stream;
   
@@ -51,7 +55,7 @@ class PlaybackService with BlocInterface {
   int _currentQueuePosition = 0;
 
   bool repeat = false;
-  bool random = false;
+  bool _random = false;
 
   // current player state
   AudioPlayerState _currentState;
@@ -77,7 +81,12 @@ class PlaybackService with BlocInterface {
     _recentSongsIds = recentSongs;
     _recentSongsIdSubject.sink.add( _recentSongsIds );
   }
-  
+
+  void setShuffle(bool status) {
+    _random = status;
+    _shuffleSubject.sink.add(_random);
+  }
+
   addToRecentSongs(final String id){
     RecentSongDAO.insertRecentSong(
         RecentSong(
@@ -90,7 +99,14 @@ class PlaybackService with BlocInterface {
     _recentSongsIds.insert(0, id);
     updateRecentSongs(_recentSongsIds);
   }
-  
+
+  void clearQueue(){
+    _audioPlayer.stop();
+    _queue.clear();
+    _currentQueuePosition = 0;
+    _addToQueueSink(_queue);
+  }
+
   _playerStateListener(AudioPlayerState state){
     print('state change listener $state');
     _currentState = state;
@@ -109,7 +125,7 @@ class PlaybackService with BlocInterface {
         if (repeat)
           playAt(_currentQueuePosition);
 
-        else if (random)
+        else if (_random)
           _playRandomly();
 
         else
@@ -123,18 +139,51 @@ class PlaybackService with BlocInterface {
     _addToStateSink(state);
   }
 
+  playNewQueue(final List<SongInfo> queue, {int start = 0, bool randomlyMode = false}) {
+    if (_queue.isNotEmpty) {
+      _queue = queue;
+      _addToQueueSink(_queue);
+
+      if (randomlyMode) {
+        _playRandomly();
+        setShuffle(randomlyMode);
+      }
+
+      else
+        playAt(start);
+    }
+  }
+
   void addToQueue(final SongInfo song) {
 
     _queue.add(song);
     _addToQueueSink(_queue);
-
+    
     if (_queue.length == 1)
       playAt(0);
   }
 
+  void enqueueList(final List<SongInfo> songs){
+    var play = _queue.isEmpty;
+    _queue.addAll(songs);
+
+    if (play)
+      playAt(0);
+
+  }
+
   addToPlayNext(SongInfo song){
-    _queue.insert(_currentQueuePosition+1, song);
-    _addToQueueSink(_queue);
+    if (_queue.isEmpty){
+      _queue.add(song);
+      _addToQueueSink(_queue);
+      playAt(0);
+    }
+
+    else {
+      _queue.insert(_currentQueuePosition+1, song);
+      _addToQueueSink(_queue);
+    }
+
   }
 
   bool _isFavoriteSong(final SongInfo song) => _favoriteSongsIds.containsKey(song.id);
@@ -192,10 +241,6 @@ class PlaybackService with BlocInterface {
 
   bool _hasPrevious() => (_currentQueuePosition -1) >= 0;
 
-  _onComplete(){
-    print('Completed');
-  }
-
   _pause()  => _audioPlayer.pause();
 
 
@@ -239,7 +284,7 @@ class PlaybackService with BlocInterface {
       return;
     }
 
-    if (random){
+    if (_random){
       _playRandomly();
       return;
     }
@@ -257,7 +302,7 @@ class PlaybackService with BlocInterface {
       return;
     }
 
-    if (random){
+    if (_random){
       _playRandomly();
       return;
     }
@@ -281,5 +326,6 @@ class PlaybackService with BlocInterface {
     _favoriteSubject?.close();
     _favouritesSongsSubject?.close();
     _recentSongsIdSubject?.close();
+    _shuffleSubject?.close();
   }
 }

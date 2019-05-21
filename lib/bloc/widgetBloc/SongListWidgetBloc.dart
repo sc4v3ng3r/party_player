@@ -1,8 +1,6 @@
 
 import 'package:flutter_audio_query/flutter_audio_query.dart';
-import 'package:party_player/widgets/bottomsheet/SongBottomSheet.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:flutter/material.dart';
 import '../ScrollingBloc.dart';
 
 class SongListWidgetBloc extends ScrollingBloc {

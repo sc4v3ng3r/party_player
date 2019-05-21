@@ -8,7 +8,6 @@ import 'package:party_player/screens/AlbumDetailsScreen.dart';
 import 'package:party_player/widgets/ActionButton.dart';
 import 'package:party_player/widgets/CardItemWidget.dart';
 import 'package:party_player/widgets/CircularItemWidget.dart';
-import 'package:party_player/widgets/RecentSongItem.dart';
 import 'package:party_player/widgets/SectionTitle.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:provider/provider.dart';
@@ -152,6 +151,10 @@ class _HomeWidgetState extends State<HomeWidget> {
           title: "RECENTS",
           iconData: CupertinoIcons.restart,
           iconColor: Colors.blueGrey[400],
+          onTap: () {
+            _playbackService.playNewQueue( _bloc.recentSongs);
+          },
+
         ),
         ActionButton(
           title: "MOST PLAYED",
@@ -200,30 +203,28 @@ class _HomeWidgetState extends State<HomeWidget> {
                   );
 
                 return Container(
-                  height: 120,
+                  height: 180,
                   child: ListView.builder(
                       shrinkWrap: true,
                       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index){
-                        return Stack(
-                          children: <Widget>[
-                            RecentSongItem(
-                              title: snapshot.data[index].title,
-                              width: 100,
-                              height: 135,
-                            ),
-                            Positioned.fill(
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: (){},
-                                  ),
-                                ),
-                            ),
-                          ],
+                        return CardItemWidget(
+                          width: 160.0,
+                          height: 160.0,
+                          heroTag: snapshot.data[index].id,
+                          title: snapshot.data[index].title,
+                          subtitle: snapshot.data[index].artist,
+                          backgroundImage: snapshot.data[index].albumArtwork,
+                          elevation: 4.0,
+                          stripeColor: Colors.white.withOpacity(0.5),
                         );
+//                        return
+//                            RecentSongItem(
+//                              title: snapshot.data[index].title,
+//                              width: 140,
+//                        );
                       }
                   ),
                 );
@@ -352,29 +353,22 @@ class _HomeWidgetState extends State<HomeWidget> {
                   return Text('FAVOURITES body');
 
                 return Container(
-                  height: 120,
+                  height: 180,
                   child: ListView.builder(
                       shrinkWrap: true,
                       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, index){
-                        return Stack(
-                          children: <Widget>[
-                            RecentSongItem(
-                              title: snapshot.data[index].title,
-                              width: 100,
-                              height: 135,
-                            ),
-                            Positioned.fill(
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: (){},
-                                ),
-                              ),
-                            ),
-                          ],
+                        return CardItemWidget(
+                          width: 160.0,
+                          height: 160.0,
+                          heroTag: GlobalKey(),
+                          elevation: 4.0,
+                          backgroundImage: snapshot.data[index].albumArtwork,
+                          title: snapshot.data[index].title,
+                          stripeColor: Colors.white.withOpacity(.5),
+
                         );
                       }
                   ),

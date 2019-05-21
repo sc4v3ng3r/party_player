@@ -41,13 +41,11 @@ class _StateNowPlaying extends State<PlayingNowScreen>
   Animation<double> _animateIcon;
 
   Timer timer;
-  bool _showArtistImage;
 
 
   @override
   void initState() {
     super.initState();
-    _showArtistImage = false;
     initAnim();
   }
 
@@ -332,8 +330,6 @@ class _StateNowPlaying extends State<PlayingNowScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          //TODO Aqui a gente deve verificar se a musica atual eh favorita, se sim,
-          // o botao ja comeca "apertado", se nao, "solto"
 
           StreamBuilder<bool>(
             stream: _playbackBloc.favoriteStream,
@@ -353,20 +349,6 @@ class _StateNowPlaying extends State<PlayingNowScreen>
               );
             },
           ),
-//          Flexible(
-//            child: ChangeableIconButton(
-//              initialStatus: ButtonStatus.PRIMARY,
-//              primaryIcon: Icon(Icons.favorite_border, color: Colors.blueGrey),
-//              secondaryIcon: Icon(Icons.favorite, color: Colors.blueGrey),
-//              size: 30.0,
-//              onTap: (status) {
-//                status == ButtonStatus.SECONDARY ? _playbackBloc.addToFavourites(_playbackBloc.currentSong)
-//                  : _playbackBloc.removeFromFavourite(_playbackBloc.currentSong);
-//                // setFav(song);
-//              },
-//            ),
-//          ),
-
           Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
 
           Flexible(
@@ -417,18 +399,21 @@ class _StateNowPlaying extends State<PlayingNowScreen>
 
           // TODO: verificar se o modo repeat estivado ou nao, para
           //poder definir o estado inicial do botao!
-          Flexible(
-            child: ChangeableIconButton(
-              tooltip: "Shuffle",
-              initialStatus: ButtonStatus.SECONDARY,
-              primaryIcon: Icon(Icons.shuffle, color: Colors.blueGrey),
-              secondaryIcon:
-                  Icon(Icons.shuffle, color: Colors.blueGrey.withOpacity(0.5)),
-              size: 30.0,
-              onTap: (status) {
-                _playbackBloc.random = (status == ButtonStatus.PRIMARY);
-              },
-            ),
+
+          StreamBuilder<bool>(
+            stream: _playbackBloc.shuffleStream,
+            initialData: false,
+            builder: (context, snapshot){
+              var color = (snapshot.data) ? Colors.blueGrey : Colors.blueGrey.withOpacity(0.5);
+
+              return IconButton(
+                iconSize: 30,
+                icon: Icon(Icons.shuffle, color: color,),
+                onPressed: (){
+                  _playbackBloc.setShuffle( !snapshot.data );
+                },
+              );
+            },
           ),
         ],
       );

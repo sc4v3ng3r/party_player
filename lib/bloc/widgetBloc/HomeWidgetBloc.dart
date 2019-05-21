@@ -31,6 +31,9 @@ class HomeWidgetBloc extends BlocInterface {
   final List<String> topArtists;
   final List<String> favorites;
 
+  List<SongInfo> _recentSongs;
+  List<SongInfo> get recentSongs => _recentSongs;
+
   HomeWidgetBloc({
     @required this.recentIds,
     @required this.topAlbums,
@@ -50,7 +53,10 @@ class HomeWidgetBloc extends BlocInterface {
   _addArtistToSink(final List<ArtistInfo> data) => _topArtistSubject.sink.add(data);
   _addArtistError(final Object error) => _topArtistSubject.sink.addError(error);
 
-  _addRecentSongsToSink( final List<SongInfo> data ) => _recentSubject.sink.add(data);
+  _addRecentSongsToSink( final List<SongInfo> data ) {
+    _recentSongs = data;
+    _recentSubject.sink.add(data);
+  }
   _addRecentSongsError( final Object error ) => _recentSubject.sink.addError( error );
 
   _addFavoriteSongsToSink( final List<SongInfo> data) => _favouritesSubject.sink.add(data);

@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:party_player/bloc/ApplicationBloc.dart';
+import 'package:party_player/bloc/PlaybackService.dart';
 import 'package:party_player/bloc/screenBloc/AlbumDetailsScreenBloc.dart';
 import 'package:party_player/widgets/InfoWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
@@ -13,6 +15,7 @@ class AlbumDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AlbumDetailsScreenBloc bloc = Provider.of<AlbumDetailsScreenBloc>(context);
+    PlaybackService playback = Provider.of<ApplicationBloc>(context).playbackService;
 
     final expandedHeight = MediaQuery.of(context).size.width;
 
@@ -56,11 +59,46 @@ class AlbumDetailsScreen extends StatelessWidget {
 
     final albumSongsNumber = bloc.albumSongsNumber;
 
-    final infoRow = InfoWidget(
-        title: bloc.currentAlbum.artist,
-        subtitle: (albumSongsNumber) > 1
-            ? "$albumSongsNumber Songs"
-            : "$albumSongsNumber Song");
+    final actionsRow = Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: <Widget>[
+        IconButton(
+          icon: Icon(Icons.add_to_queue),
+          onPressed: (){
+            playback.enqueueList( bloc.currentAlbumSongs );
+          },
+        ),
+
+        IconButton(
+            tooltip: 'Play randomly',
+            icon: Icon(Icons.shuffle),
+            onPressed: (){
+              playback.playNewQueue( bloc.currentAlbumSongs, randomlyMode: true);
+            }
+        ),
+      ],
+    );
+
+    final infoRow = Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: <Widget>[
+
+        Flexible(
+          flex: 2,
+          fit: FlexFit.tight,
+          child: InfoWidget(
+              title: bloc.currentAlbum.artist,
+              subtitle: (albumSongsNumber) > 1
+                  ? "$albumSongsNumber Songs"
+                  : "$albumSongsNumber Song"),
+        ),
+        //actionsRow,
+      ],
+
+
+    );
 
     final infoSliverList = SliverList(
       delegate: SliverChildListDelegate(<Widget>[
@@ -72,6 +110,7 @@ class AlbumDetailsScreen extends StatelessWidget {
               children: <Widget>[
                 albumName,
                 infoRow,
+                actionsRow
               ],
             ),
           ),
@@ -138,6 +177,7 @@ class AlbumDetailsScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             StreamBuilder<double>(
                 stream: bloc.scrollingOffsetStream,
                 builder: (context, snapshot) {
@@ -174,10 +214,12 @@ class AlbumDetailsScreen extends StatelessWidget {
                           backgroundColor: Colors.blueGrey[400],
                           heroTag: GlobalKey(),
                           child: Icon(
-                            CupertinoIcons.shuffle_thick,
+                            Icons.play_arrow,
                             color: Colors.white,
                           ),
-                          onPressed: () {}),
+                          onPressed: () {
+                            playback.playNewQueue( bloc.currentAlbumSongs );
+                          }),
                     ),
                   );
                 }),
