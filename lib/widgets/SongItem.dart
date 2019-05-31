@@ -19,7 +19,6 @@ class SongItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-
       leading: Hero(tag: tag,
           child: (image != null) ? Image.file(File(image), width: imageSize,height: imageSize,) :
           Image.asset("images/artist.jpg"),

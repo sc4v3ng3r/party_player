@@ -74,11 +74,13 @@ class HomeWidgetBloc extends BlocInterface {
     try {
 
       List<SongInfo> recentSongs = await audioQuery.getSongsById(ids: recentIds,
-          sortType: SongSortType.CURRENT_IDs_ORDER);
+          sortType: SongSortType.CURRENT_IDs_ORDER).catchError((err) => print('recent songs error ${err.toString()}'));
 
+      print('HomeWidgetBloc initData recents songs ${recentSongs.length}');
       //List<AlbumInfo> topAlbums = await audioQuery.getAlbums(sortType: AlbumSortType.MOST_RECENT_YEAR);
 
       if (recentSongs != null){
+
         _addRecentSongsToSink(recentSongs);
         //_addAlbumToSink(topAlbums);
         loadTopAlbums();
@@ -102,8 +104,8 @@ class HomeWidgetBloc extends BlocInterface {
     audioQuery.getSongsById(ids: favorites, sortType: SongSortType.CURRENT_IDs_ORDER)
         .then( _addFavoriteSongsToSink )
         .catchError(_addFavoriteSongsError );
-
   }
+
   loadTopAlbums({final AlbumSortType sortType = AlbumSortType.DEFAULT}) {
 //
 ////    addAlbumToSink(null);

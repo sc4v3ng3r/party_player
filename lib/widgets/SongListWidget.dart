@@ -140,7 +140,6 @@ class SongListWidget extends StatelessWidget {
     );
   }
 
-
   Widget _createFAB() => AnimatedOpacity(
         opacity: 1.0,
         duration: Duration(seconds: 1),
@@ -159,35 +158,7 @@ class SongListWidget extends StatelessWidget {
   showSongBottomSheet(BuildContext context, SongInfo song, PlaybackService playback){
     showModalBottomSheet(
       context: context,
-      builder: (context) => SongBottomSheet(song: song,
-        actions: [
-          ActionButton(
-            iconData: Icons.skip_next,
-            title: 'Play next',
-            onTap: (){
-              playback.addToPlayNext(song);
-              Navigator.pop(context);
-             },
-          ),
-
-          ActionButton(
-            iconData: Icons.playlist_add,
-            title: 'Add to',
-            onTap: (){
-              Navigator.pop(context);
-            },
-          ),
-
-          ActionButton(
-            iconData: Icons.add_to_queue,
-            title: 'Enqueue',
-            onTap: (){
-              playback.addToQueue(song);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
+      builder: (context) => SongBottomSheet(song: song),
     );
   }
 

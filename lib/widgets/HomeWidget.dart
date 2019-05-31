@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:party_player/bloc/ApplicationBloc.dart';
-import 'package:party_player/bloc/PlaybackService.dart';
 import 'package:party_player/bloc/widgetBloc/HomeWidgetBloc.dart';
 import 'package:party_player/screens/AlbumDetailsScreen.dart';
 import 'package:party_player/widgets/ActionButton.dart';
@@ -14,34 +13,13 @@ import 'package:provider/provider.dart';
 import 'package:party_player/bloc/screenBloc/AlbumDetailsScreenBloc.dart';
 
 
-class HomeWidget extends StatefulWidget {
-  //final HomeWidgetBloc _bloc = HomeWidgetBloc();
+class HomeWidget extends StatelessWidget {
 
-  @override
-  _HomeWidgetState createState() => _HomeWidgetState();
-}
-
-class _HomeWidgetState extends State<HomeWidget> {
-
-  HomeWidgetBloc _bloc;
-  PlaybackService _playbackService;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-
-  @override
-  void didChangeDependencies() {
-    _playbackService ??= Provider.of<ApplicationBloc>(context).playbackService;
-    _bloc ??= Provider.of<HomeWidgetBloc>(context);
-    super.didChangeDependencies();
-
-  }
   @override
   Widget build(BuildContext context) {
     //final Orientation orientation = MediaQuery.of(context).orientation;
+    var playbackService = Provider.of<ApplicationBloc>(context).playbackService;
+    var bloc = Provider.of<HomeWidgetBloc>(context);
 
     final sliverAppBar = SliverAppBar(
       expandedHeight: 200.0,
@@ -88,8 +66,8 @@ class _HomeWidgetState extends State<HomeWidget> {
           children: <Widget>[
 
             StreamBuilder<SongInfo>(
-              initialData: _playbackService.currentSong,
-              stream: _playbackService.songReadyStream,
+              initialData: playbackService.currentSong,
+              stream: playbackService.songReadyStream,
               builder: (context, snapshot){
                 if ( (snapshot.hasData) && (snapshot.data?.albumArtwork != null))
                   return Image.file(File(snapshot.data.albumArtwork), fit: BoxFit.fitWidth,);
@@ -109,8 +87,8 @@ class _HomeWidgetState extends State<HomeWidget> {
       padding: EdgeInsets.only(left: 15.0, top: 15.0, bottom: 10.0),
       child: Center(
         child: StreamBuilder<SongInfo>(
-          initialData: _playbackService.currentSong,
-          stream: _playbackService.songReadyStream,
+          initialData: playbackService.currentSong,
+          stream: playbackService.songReadyStream,
           builder: (context, snapshot){
             return Text(
 
@@ -152,15 +130,16 @@ class _HomeWidgetState extends State<HomeWidget> {
           iconData: CupertinoIcons.restart,
           iconColor: Colors.blueGrey[400],
           onTap: () {
-            _playbackService.playNewQueue( _bloc.recentSongs);
+            playbackService.playNewQueue( List.from(bloc.recentSongs) );
           },
-
         ),
+
         ActionButton(
           title: "MOST PLAYED",
           iconData: Icons.assessment,
           iconColor: Colors.blueGrey[400],
         ),
+
         ActionButton(
           title: "RANDOM",
           iconData: CupertinoIcons.shuffle_thick,
@@ -169,11 +148,55 @@ class _HomeWidgetState extends State<HomeWidget> {
       ],
     );
 
+    final recentSongsWidget = Container(
+      height: 180,
+      child: StreamBuilder<List<SongInfo>>(
+        stream: bloc.recentSongsStream,
+        builder: (context, snapshot){
+          if (!snapshot.hasData){
+            if (snapshot.hasError) return Text('${snapshot.error}');
+            else return Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.data.isEmpty)
+            return Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(Icons.music_note),
+                Text('Explore you music'),
+              ],
+            );
+
+          return ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
+              scrollDirection: Axis.horizontal,
+              itemCount: snapshot.data.length,
+              itemBuilder: (context, index){
+                return CardItemWidget(
+                  width: 160.0,
+                  height: 160.0,
+                  heroTag: snapshot.data[index].id,
+                  title: snapshot.data[index].title,
+                  subtitle: snapshot.data[index].artist,
+                  backgroundImage: snapshot.data[index].albumArtwork,
+                  elevation: 4.0,
+                  stripeColor: Colors.white.withOpacity(0.5),
+                );
+              },
+          );
+        },
+      ),
+    );
+
     return CustomScrollView(
+      shrinkWrap: true,
       slivers: <Widget>[
         sliverAppBar,
         new SliverList(
-          delegate: SliverChildListDelegate(<Widget>[
+          delegate: SliverChildListDelegate(
+            <Widget>[
 
             playingNowArtistTitle,
             quickActionsTitle,
@@ -183,54 +206,8 @@ class _HomeWidgetState extends State<HomeWidget> {
             /// TODO quando ainda nao houver recentes, nao mostrar essa widget
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle( title: "YOUR RECENTS!", ),
+            recentSongsWidget,
 
-            StreamBuilder<List<SongInfo>>(
-              stream: _bloc.recentSongsStream,
-              builder: (context, snapshot){
-                if (!snapshot.hasData){
-                  if (snapshot.hasError) return Text('${snapshot.error}');
-                  else return Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.data.isEmpty)
-                  return Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.music_note),
-                      Text('Explore you music'),
-                    ],
-                  );
-
-                return Container(
-                  height: 180,
-                  child: ListView.builder(
-                      shrinkWrap: true,
-                      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: .0),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: snapshot.data.length,
-                      itemBuilder: (context, index){
-                        return CardItemWidget(
-                          width: 160.0,
-                          height: 160.0,
-                          heroTag: snapshot.data[index].id,
-                          title: snapshot.data[index].title,
-                          subtitle: snapshot.data[index].artist,
-                          backgroundImage: snapshot.data[index].albumArtwork,
-                          elevation: 4.0,
-                          stripeColor: Colors.white.withOpacity(0.5),
-                        );
-//                        return
-//                            RecentSongItem(
-//                              title: snapshot.data[index].title,
-//                              width: 140,
-//                        );
-                      }
-                  ),
-                );
-
-              },
-            ),
              //recentW(),
 
             //Top Albums
@@ -238,7 +215,7 @@ class _HomeWidgetState extends State<HomeWidget> {
             SectionTitle(title: "TOP ALBUMS",),
 
             StreamBuilder<List<AlbumInfo>>(
-              stream: _bloc.topAlbumsStream,
+              stream: bloc.topAlbumsStream,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   if (snapshot.hasError) return Text('${snapshot.error}');
@@ -307,7 +284,7 @@ class _HomeWidgetState extends State<HomeWidget> {
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle(title: "TOP ARTISTS",),
             StreamBuilder<List<ArtistInfo>>(
-              stream: _bloc.topArtistsStream,
+              stream: bloc.topArtistsStream,
               builder: (context, artistSnapshot) {
 
                 if (!artistSnapshot.hasData) {
@@ -341,7 +318,7 @@ class _HomeWidgetState extends State<HomeWidget> {
             ),
 
             StreamBuilder< List<SongInfo> >(
-              stream: _bloc.favouritesSongStream,
+              stream: bloc.favouritesSongStream,
               builder: (context, snapshot){
                 if (!snapshot.hasData){
                   if (snapshot.hasError)
@@ -431,7 +408,7 @@ class _HomeWidgetState extends State<HomeWidget> {
             Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
             SectionTitle( title: "YOUR PLAYLISTS",),
             StreamBuilder<List<PlaylistInfo>>(
-              stream: _bloc.playlistStream,
+              stream: bloc.playlistStream,
               builder: (context, snapshot) {
 
                 if (!snapshot.hasData) {
@@ -479,11 +456,6 @@ class _HomeWidgetState extends State<HomeWidget> {
     );
   }
 
-  @override
-  void dispose() {
-    _bloc?.dispose();
-    super.dispose();
-  }
 }
 
 

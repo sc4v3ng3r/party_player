@@ -170,27 +170,17 @@ class _MainWidgetState extends State<MainWidget> {
 
             switch(snapshot.data){
               case HomePageNavigation.HOME:
-                return MultiProvider(
-                    providers: [
-                      Provider<ApplicationBloc>(
-                        builder: (_) => _appBloc,
-                      ),
-
-                      Provider<HomeWidgetBloc>(
-                        builder: (_) {
-                          var bloc = HomeWidgetBloc(
-                            recentIds: _appBloc.recentSongIds,
-                            topAlbums: _appBloc.topAlbumIds,
-                            topArtists: _appBloc.topArtistIds,
-                            favorites: _appBloc.favoriteSongIds
-                          );
-
-                          bloc.initData();
-                          return bloc;
-                        },
-                        dispose: (_, bloc) => bloc.dispose(),
-                      ),
-                    ],
+                return Provider<HomeWidgetBloc>(
+                  builder: (_) {
+                    var bloc = HomeWidgetBloc(
+                        recentIds: _appBloc.recentSongIds,
+                        topAlbums: _appBloc.topAlbumIds,
+                        topArtists: _appBloc.topArtistIds,
+                        favorites: _appBloc.favoriteSongIds);
+                    bloc.initData();
+                    return bloc;
+                    },
+                  dispose: (_, bloc) => bloc.dispose(),
                   child: HomeWidget(),
                 );
 

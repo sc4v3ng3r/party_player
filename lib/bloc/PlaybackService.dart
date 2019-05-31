@@ -133,14 +133,24 @@ class PlaybackService with BlocInterface {
         break;
 
       case AudioPlayerState.STOPPED:
+        if (_queue.isEmpty){
+          _currentQueuePosition = -1;
+          _currentSong = null;
+        }
+        else {
+          _currentSong = _queue[_currentQueuePosition];
+        }
 
+        //_addToQueueSink(_queue);
+        _addToCurrentSongSink(_currentSong);
+        _addToPositionSink(Duration(milliseconds: 0));
         break;
     }
     _addToStateSink(state);
   }
 
   playNewQueue(final List<SongInfo> queue, {int start = 0, bool randomlyMode = false}) {
-    if (_queue.isNotEmpty) {
+    if (queue.isNotEmpty) {
       _queue = queue;
       _addToQueueSink(_queue);
 
@@ -148,10 +158,10 @@ class PlaybackService with BlocInterface {
         _playRandomly();
         setShuffle(randomlyMode);
       }
-
       else
         playAt(start);
-    }
+
+    } else print('playNewQueue queue is empty');
   }
 
   void addToQueue(final SongInfo song) {
@@ -259,28 +269,60 @@ class PlaybackService with BlocInterface {
     _playSong(song);
   }
 
-  playAt(int position) => _playSong( _queue[position] );
+  playAt(int position) {
+    if ( (position < 0) || _queue.isEmpty){
+      stop();
+      return;
+    }
+
+    _currentQueuePosition = position;
+    _playSong( _queue[position] );
+  }
 
   _playSong(final SongInfo song) async {
     if (_currentState != AudioPlayerState.STOPPED )
       await _audioPlayer.stop();
 
+    _currentSong = null;
+    _addToPositionSink(null);
+
     _audioPlayer.play(song.filePath, isLocal: true).then(
             (status) {
-              //print('PLAY STATUS $status');
               _currentSong = song;
-              _currentQueuePosition = _queue.indexOf(song);
               _addToCurrentSongSink(song);
               _addToFavoriteStream( _favoriteSongsIds.containsKey(song.id) );
 
             }).catchError( (error) => print('DEU ERRO $error') );
   }
 
-  _playRandomly() => playAt( _indexGenerator.nextInt( _queue.length ));
+  void removeAt(final int index) {
+    print('BEFORE remove index: $index - playlist index: $_currentQueuePosition');
+
+    _queue.removeAt(index);
+    if (index == _currentQueuePosition){
+      _currentQueuePosition--;
+      next();
+    }
+    _addToQueueSink(_queue);
+    print('AFTER remove index: $index - playlist index: $_currentQueuePosition');
+  }
+
+  _playRandomly() {
+    if (_queue.isEmpty) {
+      stop();
+      return;
+    }
+
+    playAt(_indexGenerator.nextInt(_queue.length));
+  }
 
   next() async {
+
     if (repeat){
-      playAt(_currentQueuePosition);
+      if (_queue.isEmpty)
+        stop();
+      else
+        playAt(_currentQueuePosition);
       return;
     }
 
@@ -293,7 +335,8 @@ class PlaybackService with BlocInterface {
       playAt(0);
       return;
     }
-    playAt(_currentQueuePosition+1);
+
+    playAt( _currentQueuePosition+1 );
   }
 
   previous(){
@@ -310,6 +353,7 @@ class PlaybackService with BlocInterface {
     if (_hasPrevious())
       playAt(_currentQueuePosition-1);
 
+    // play last queue song
     else playAt(_queue.length-1);
   }
 

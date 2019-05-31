@@ -9,6 +9,7 @@ import 'package:party_player/bloc/screenBloc/AlbumDetailsScreenBloc.dart';
 import 'package:party_player/widgets/InfoWidget.dart';
 import 'package:party_player/widgets/NoDataWidget.dart';
 import 'package:party_player/widgets/SongItem.dart';
+import 'package:party_player/widgets/bottomsheet/SongBottomSheet.dart';
 import 'package:provider/provider.dart';
 
 class AlbumDetailsScreen extends StatelessWidget {
@@ -155,10 +156,12 @@ class AlbumDetailsScreen extends StatelessWidget {
               tag: snapshot.data[index].id,
               image: snapshot.data[index].albumArtwork,
               duration: int.parse(snapshot.data[index].duration),
+              onTap: () => playback.playNewQueue( bloc.currentAlbumSongs, start: index),
+              optionPress: () => _showBottomSheet(context, bloc, playback, snapshot.data[index]),
             );
           }, childCount: snapshot.data.length),
         );
-      }, // end streamBuilder builder method
+      },
     );
 
     return Scaffold(
@@ -226,6 +229,14 @@ class AlbumDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  _showBottomSheet(BuildContext context, AlbumDetailsScreenBloc bloc,
+      PlaybackService service, SongInfo song) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SongBottomSheet(song: song,),
     );
   }
 }

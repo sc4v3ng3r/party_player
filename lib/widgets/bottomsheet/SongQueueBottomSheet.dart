@@ -12,11 +12,9 @@ class SongQueueBottomSheet extends StatelessWidget {
     var bloc = Provider.of<PlaybackService>(context);
 
     return Container(
-
         height: MediaQuery.of(context).size.height * 0.7,
 
         child: Scrollbar(
-
           child: StreamBuilder<List<SongInfo>>(
             stream: bloc.queueStream,
             builder: (context, snapshot){
@@ -26,26 +24,49 @@ class SongQueueBottomSheet extends StatelessWidget {
                 );
 
               return ListView.builder(
+                shrinkWrap: true,
                 physics: ClampingScrollPhysics(),
                 itemCount: snapshot.data.length,
-                padding: EdgeInsets.only(
-                    left: MediaQuery.of(context).size.width * 0.06,
-                    right: MediaQuery.of(context).size.width * 0.06,
-                    top: 10.0),
-
+                padding: EdgeInsets.only(top: 10),
                 itemBuilder: (context, index){
-                  return SongItem(
-                    duration: int.parse(snapshot.data[index].duration),
-                    songArtist: snapshot.data[index].artist,
-                    songTitle: snapshot.data[index].title,
-                    tag: '${snapshot.data[index].id} ${snapshot.data[index].displayName}',
-                    image: snapshot.data[index].albumArtwork,
-                    onTap: (){
-                      bloc.playAt(index);
-                      Navigator.pop(context);
+
+                  return Dismissible(
+                    key: ValueKey('$index ${snapshot.data[index].id}'),
+                    direction: DismissDirection.horizontal,
+
+                    background: Container(
+                      color: Colors.red,
+                      child: IconButton(
+                        color: Colors.white,
+                          icon: Icon(Icons.undo),
+                          onPressed: null
+                      ),
+                    ),
+
+                    onDismissed: (direction){
+                      print('remove ${snapshot.data[index].title}');
+                      bloc.removeAt(index);
                     },
+
+
+                    child: Container(
+                        color: Colors.white,
+                        child: SongItem(
+                          duration: int.parse(snapshot.data[index].duration),
+                          songArtist: snapshot.data[index].artist,
+                          songTitle: snapshot.data[index].title,
+                          tag: '${snapshot.data[index].id} ${snapshot.data[index].displayName}',
+                          image: snapshot.data[index].albumArtwork,
+                          onTap: (){
+                            bloc.playAt(index);
+                            Navigator.pop(context);
+                          },
+                        ),
+                    ),
                   );
                 },
+
+
 //                itemBuilder: (context, i) => new Column(
 //                  children: <Widget>[
 //                    ///TODO This represents a list item of a song

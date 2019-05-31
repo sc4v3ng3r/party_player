@@ -22,7 +22,7 @@ dependencies:
 
   cupertino_icons: ^0.1.2
   flutter_audio_query: ^0.2.1
-  #audioplayer: ^0.5.2
+#  flutter_slidable: ^0.5.0
   audioplayers: ^0.12.0
   audio_service: ^0.2.0
   swipedetector: ^1.2.0

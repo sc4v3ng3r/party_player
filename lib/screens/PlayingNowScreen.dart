@@ -31,10 +31,7 @@ class _StateNowPlaying extends State<PlayingNowScreen>
   PlaybackService _playbackBloc;
 
   Duration duration = Duration(seconds: 0);
-//  Duration position = Duration(seconds: 0);
-//  bool isPlaying = false;
-  int isFav = 1;
-  int repeatOn = 0;
+
   Orientation orientation;
   AnimationController _animationController;
   Animation<Color> _animateColor;
@@ -205,6 +202,8 @@ class _StateNowPlaying extends State<PlayingNowScreen>
       StreamBuilder<Duration>(
         stream: _playbackBloc.positionStream,
         builder: (context, snapshot) {
+          print('---------------- Value will be ${snapshot.data}');
+
           return Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -212,7 +211,6 @@ class _StateNowPlaying extends State<PlayingNowScreen>
 
               Flexible(
                 child: Container(
-//                  color: Colors.red,
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
                   (snapshot.data != null) ? Utility.parseToMinutesSeconds(snapshot.data) : '0:00',
@@ -227,17 +225,18 @@ class _StateNowPlaying extends State<PlayingNowScreen>
 
               Container(
                 width: width * 0.85,
+                height: 40,
 //                padding: EdgeInsets.only(
 //                  left: statusBarHeight * 0.5,
 //                ),
+                // TODO: BUG do onCOmplete, o value ficar maior que o max
                 child: Slider(
                   min: 0.0,
                   max: (_playbackBloc.currentSong == null)
-                      ? 100000 : double.parse(_playbackBloc.currentSong.duration ?? .0) ,
-
+                      ? .0 : Duration(milliseconds: int.parse(_playbackBloc.currentSong.duration)).inMilliseconds.toDouble(),
                   activeColor: Colors.blueGrey.shade400,
                   inactiveColor: Colors.blueGrey.shade300.withOpacity(0.3),
-                  value: (snapshot.data != null) ? snapshot.data.inMilliseconds.toDouble() ?? .0 : .0,
+                  value: (snapshot.data == null) ? 0.0 : snapshot.data.inMilliseconds.toDouble(),
                   onChanged: (value) {
                     _playbackBloc.seek( value );
                   },
@@ -260,6 +259,7 @@ class _StateNowPlaying extends State<PlayingNowScreen>
                   ),
                 ),
               ),
+
             ],
           );
         },
@@ -396,9 +396,6 @@ class _StateNowPlaying extends State<PlayingNowScreen>
           ),
 
           Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
-
-          // TODO: verificar se o modo repeat estivado ou nao, para
-          //poder definir o estado inicial do botao!
 
           StreamBuilder<bool>(
             stream: _playbackBloc.shuffleStream,

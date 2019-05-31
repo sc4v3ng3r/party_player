@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
-
+import 'package:party_player/bloc/ApplicationBloc.dart';
+import 'package:party_player/bloc/PlaybackService.dart';
+import 'package:party_player/widgets/ActionButton.dart';
+import 'package:provider/provider.dart';
 class SongBottomSheet extends StatelessWidget {
 
   final SongInfo song;
-  final List<Widget> actions;
-  SongBottomSheet({this.song, this.actions});
+
+  SongBottomSheet({this.song});
 
   @override
   Widget build(BuildContext context) {
+    PlaybackService playback = Provider.of<ApplicationBloc>(context).playbackService;
 
     final titleRow = Row(
       mainAxisSize: MainAxisSize.max,
@@ -33,8 +37,35 @@ class SongBottomSheet extends StatelessWidget {
     final actionsRow = Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: actions,
+      children: <Widget>[
+        ActionButton(
+          iconData: Icons.skip_next,
+          title: 'Play next',
+          onTap: (){
+            playback.addToPlayNext(song);
+            Navigator.pop(context);
+          },
+        ),
+
+        ActionButton(
+          iconData: Icons.playlist_add,
+          title: 'Add to',
+          onTap: (){
+            Navigator.pop(context);
+          },
+        ),
+
+        ActionButton(
+          iconData: Icons.add_to_queue,
+          title: 'Enqueue',
+          onTap: (){
+            playback.addToQueue(song);
+            Navigator.pop(context);
+          },
+        )
+      ],
     );
+
 
     // TODO: rounded corners is not working in bottom sheet.
     return Theme(
