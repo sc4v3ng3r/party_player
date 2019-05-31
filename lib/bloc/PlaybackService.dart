@@ -13,6 +13,10 @@ import 'package:rxdart/rxdart.dart';
 ///  Adiciona e remove items da lista
 ///  play, pause, seek, next, previous
 ///
+///
+/// TODO bug quando  remove uma musica da queue, o previous apos remocao nao funciona corretamente.
+/// toca a mesma musica. Tem que atualizar a posicao de acordo a remocao, antes ou depois da atual cancao.
+///
 class PlaybackService with BlocInterface {
 
   final AudioPlayer _audioPlayer = AudioPlayer();
