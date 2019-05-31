@@ -2,7 +2,7 @@
 
 A great, completed and fun Flutter music player under development using flutter_audio_query plugin.
 
-## Some image about current state
+## Some images showing current state
 
 ![](https://i.ibb.co/5ntqkrY/home-Artist.gif) |
 ![](![](https://i.ibb.co/BwczKzF/homeAll.gif)) |
